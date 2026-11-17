@@ -62,13 +62,22 @@ Run `npm test` — there's a test that makes sure **every** champ can fight with
 
 ---
 
+## What's simulated (v1.3)
+
+- 171 champions (43 detailed kits, 128 simplified). Jinx cross-checked vs patch 26 data (🔎 badge).
+- 2026 rules: 200% base crit, 6 items + boots for bot lane, level cap 20 (Role Quest).
+- Items: ~70 passives incl. 2026 items (≈ = estimated number), Guardian Angel revive, Rabadon's.
+- Every rune has an entry (combat effect, or marked "no effect in a fight").
+- Optional mana/energy mode (estimated costs).
+- Supports heal/shield the lowest-HP ally in team fights.
+- Best next item vs any target, starter items, champion pages (#/builds/Jinx) + static SEO pages and sitemap.
+
 ## Known limits (honest list)
 
 - Crits use the **average** (no luck) so results are repeatable.
 - Mana/energy are ignored.
 - Positioning mode is a simple model (move, kite, dash). Good for "who gets there first", not exact.
 - **All 171 champions have ability files.** 43 are detailed kits (all marksmen + 15 popular champs). The other ~128 are **simplified kits** (main damage, CC, shields/heals — yellow badge).
-- Support heals/shields go on themselves (no ally targeting yet).
 - Old patches (patch picker): items and base stats change, but ability numbers are from the current patch.
 - Champions added after this was written only basic-attack (⚠ badge) until a kit is added.
 - Lethality formula: check `LETHALITY_SCALES_WITH_LEVEL` in `src/engine/damage.js` each season.
@@ -81,8 +90,8 @@ that keeps the Riot API key secret — setup steps in [`worker/README.md`](worke
 ## Later
 
 1. Verify kits in the Practice Tool (Jinx first) → green "verified" badges
-2. Upgrade the most-played simplified kits to detailed ones
-3. Support heals/shields on allies in Team fight
+2. Cross-check more kits vs patch data (🔎 badge)
+3. Exact mana costs per spell
 
 ---
 

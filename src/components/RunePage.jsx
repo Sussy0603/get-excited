@@ -47,10 +47,11 @@ export default function RunePage({ runes, onChange }) {
   }
 
   const RuneBtn = ({ r, on, onClick, big }) => {
-    const sim = !!RUNE_EFFECTS[r.key]
+    const fx = RUNE_EFFECTS[r.key]
+    const sim = !!fx
     return (
       <button className={`rune ${on ? 'on' : ''} ${sim ? '' : 'nosim'} ${big ? 'big' : ''}`} onClick={onClick} aria-pressed={on}
-        title={`${r.name}${sim ? ` — ${RUNE_EFFECTS[r.key].desc}` : ` (${t('not_simulated')})`}`}>
+        title={`${r.name}${sim ? ` — ${fx.desc}${fx.noCombat ? ` (${t('no_combat')})` : ''}` : ` (${t('not_simulated')})`}`}>
         <Icon kind="rune" file={r.icon} label={r.name} size={big ? '' : 'sm'} round />
       </button>
     )

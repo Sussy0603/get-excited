@@ -12,6 +12,7 @@ import Arena from '../components/Arena.jsx'
 import ShareBar from '../components/ShareBar.jsx'
 import ImportMatch from '../components/ImportMatch.jsx'
 import StatsVs from '../components/StatsVs.jsx'
+import BestItem from '../components/BestItem.jsx'
 import { buildUnit, buildDummies } from '../engine/build.js'
 import { dummyRun, fight, effectiveHp, enemyMix } from '../engine/metrics.js'
 import { TARGETS, TARGET_IDS } from '../data/targets.js'
@@ -44,12 +45,12 @@ export default function Calculator() {
     const versus = target === 'champ' ? (focusFoe ? [focusFoe] : null) : dummies
     if (!versus) return { perEnemy: [] }
     const perEnemy = target === 'champ'
-      ? foes.map((f, i) => (f ? { i, f, r: dummyRun(meU, [f], { positioning: opts.positioning, record: false }) } : null)).filter(Boolean)
+      ? foes.map((f, i) => (f ? { i, f, r: dummyRun(meU, [f], { positioning: opts.positioning, resource: opts.resource, record: false }) } : null)).filter(Boolean)
       : []
-    const main = dummyRun(meU, versus, { positioning: opts.positioning, record: false })
-    const replay = fight([meU], versus, { twoWay: target === 'champ' && opts.twoWay, positioning: opts.positioning })
+    const main = dummyRun(meU, versus, { positioning: opts.positioning, resource: opts.resource, record: false })
+    const replay = fight([meU], versus, { twoWay: target === 'champ' && opts.twoWay, positioning: opts.positioning, resource: opts.resource })
     const liveFoes = foes.filter(Boolean)
-    const mix = liveFoes.length ? enemyMix(liveFoes, meU, { positioning: opts.positioning }) : undefined
+    const mix = liveFoes.length ? enemyMix(liveFoes, meU, { positioning: opts.positioning, resource: opts.resource }) : undefined
     const ehp = effectiveHp(meU, mix && (mix.physical + mix.magic + mix.true) > 0 ? mix : undefined)
     return { perEnemy, main, replay, ehp }
   }, [meU, foes, dummies, focusFoe, opts, target])
@@ -105,6 +106,10 @@ export default function Calculator() {
                 <input type="checkbox" checked={opts.positioning} onChange={(e) => update((s) => { s.opts.positioning = e.target.checked })} />
                 {t('positioning')} <span className="tiny muted">({t('positioning_hint')})</span>
               </label>
+              <label className="toggle" title={t('resource_hint')}>
+                <input type="checkbox" checked={!!opts.resource} onChange={(e) => update((s) => { s.opts.resource = e.target.checked })} />
+                {t('resource')} <span className="tiny muted">({t('resource_hint')})</span>
+              </label>
             </div>
           </div>
           <div className="section row" style={{ justifyContent: 'space-between' }}>
@@ -156,6 +161,9 @@ export default function Calculator() {
               <StatsVs me={meU} foe={focusFoe} foes={foes.filter(Boolean)}
                 onFocus={(key) => update((s) => { s.focus = +key.slice(1) })} />
             )}
+
+            <BestItem versus={target === 'champ' ? [focusFoe] : dummies} opts={opts}
+              vsName={target === 'champ' ? focusFoe?.name : L(TARGETS[target].label, lang)} />
 
             <div className="row" style={{ alignItems: 'stretch', gap: 'var(--gap)' }}>
               {target === 'champ' && results.perEnemy.length > 0 && (

@@ -138,6 +138,45 @@ export const ITEM_EFFECTS = {
       return [{ dt: P, raw: 0.06 * ctx.tgt.maxHp, label: 'Ever Rising Moon' }]
     }),
   },
+
+  // ── 2026 items & more passives ─────────────────────────────
+  // "approx" = effect simulated with an estimated number.
+  'fiendhunter bolts': {
+    desc: 'Ultimate haste; after your ultimate, attacks get +50% attack speed for 3 attacks', approx: true,
+    ultHaste: 30,
+    afterUlt: (ctx) => { ctx.u.st.fiend = 3 },
+    asBonus: (u) => ((u.st.fiend || 0) > 0 ? 50 : 0),
+    onHit: (ctx) => { if (ctx.u.st.fiend > 0) ctx.u.st.fiend--; return [] },
+  },
+  'hexoptics c44': { desc: 'Magnification: more damage at long range (≈+7%)', approx: true, amp: (ctx) => (ctx.u.stats.range >= 500 ? 1.07 : 1) },
+  'actualizer': { desc: 'Feast: takedowns give 15% omnivamp for 8s', onTakedown: (ctx) => ctx.giveBuff('omnivampBuff', 0.15, 8, 'Feast') },
+  'endless hunger': { desc: 'Takedowns: bonus omnivamp (≈+10% for 8s)', approx: true, onTakedown: (ctx) => ctx.giveBuff('omnivampBuff', 0.1, 8, 'Endless Hunger') },
+  'dusk and dawn': { desc: 'Spellblade (magic)', approx: true, spellblade: (ctx) => ({ dt: M, raw: 0.5 * ctx.u.stats.baseAd + 0.3 * ctx.ap }) },
+  'protoplasm harness': { desc: 'Heal when under 30% HP (≈25% max HP over time)', approx: true, lowHp: { at: 0.3, fn: (u, sim) => sim.healUnit(u, 0.25 * u.maxHp, 'Protoplasm') } },
+  'stormrazor': { desc: 'Energized: 100 magic damage', onHit: everyN(4, 'storm', () => [{ dt: M, raw: 100, label: 'Bolt' }]) },
+  'voltaic cyclosword': { desc: 'Energized: bonus physical damage', approx: true, onHit: everyN(4, 'volt', () => [{ dt: P, raw: 100, label: 'Firmament' }]) },
+  'hextech gunblade': { desc: 'Active: magic bolt at fight start', approx: true, onCast: (ctx) => { if (ctx.u.st.gunblade) return; ctx.u.st.gunblade = true; ctx.sim.deal(ctx.u, ctx.tgt, byLevel(175, 253, ctx.u.stats.level) + 0.3 * ctx.ap, M, { label: 'Lightning Bolt' }) } },
+  'yun tal wildarrows': { desc: 'Flurry: +30% attack speed in fights (approx.)', approx: true, onHit: (ctx) => { if (ctx.t - (ctx.u.st.yunT ?? -99) >= 30) { ctx.u.st.yunT = ctx.t; ctx.giveBuff('asPct', 30, 6, 'Flurry') } return [] } },
+  'sundered sky': { desc: 'First hit on a champ: crit + heal (every 8s per target)', approx: true, onHit: (ctx) => { if (ctx.t - (ctx.tgtState().skyT ?? -99) < 8) return []; ctx.tgtState().skyT = ctx.t; ctx.sim.healUnit(ctx.u, ctx.u.stats.baseAd + 0.06 * (ctx.u.maxHp - ctx.u.hp), 'Lightshield'); return [{ dt: P, raw: 0.1 * ctx.ad + (ctx.u.stats.critDmg - 1) * ctx.ad * (1 - ctx.u.stats.crit), label: 'Lightshield Strike' }] } },
+  'titanic hydra': { desc: 'On-hit: % of your max HP', onHit: (ctx) => [{ dt: P, raw: (ranged(ctx) ? 0.0075 : 0.015) * ctx.u.maxHp, label: 'Colossus' }] },
+  'ravenous hydra': { desc: 'Attacks cleave nearby enemies', bolts: 0.4 },
+  "death's dance": { desc: 'Delays 30% of physical damage (≈15% reduction)', approx: true, takenMult: (type) => (type === 'physical' ? 0.85 : 1) },
+  'heartsteel': { desc: 'Every 30s per target: big physical hit', approx: true, onHit: (ctx) => { if (ctx.t - (ctx.tgtState().heartT ?? -99) < 30) return []; ctx.tgtState().heartT = ctx.t; return [{ dt: P, raw: 70 + 0.06 * ctx.u.stats.bonusHp, label: 'Colossal Consumption' }] } },
+  'sunfire aegis': { desc: 'Burns nearby enemies', approx: true, onHit: (ctx) => [{ dt: M, raw: (20 + 0.01 * ctx.u.stats.bonusHp) / Math.max(0.5, ctx.as), label: 'Immolate' }] },
+  'hollow radiance': { desc: 'Burns nearby enemies (magic)', approx: true, onHit: (ctx) => [{ dt: M, raw: (15 + 0.01 * ctx.u.stats.bonusHp) / Math.max(0.5, ctx.as), label: 'Immolate' }] },
+  "rabadon's deathcap": { desc: '+30% ability power', apMult: 1.3 },
+  'shadowflame': { desc: 'Magic damage crits targets under 40% HP (≈+10%)', approx: true, amp: (ctx) => (ctx.tgt.hp / ctx.tgt.maxHp < 0.4 && !ctx.tags.auto ? 1.1 : 1) },
+  'horizon focus': { desc: 'More damage at long range (≈+8%)', approx: true, amp: (ctx) => (!ctx.tags.auto && ctx.u.stats.range >= 450 ? 1.08 : 1) },
+  'riftmaker': { desc: 'Damage ramps up in combat (≈+6%)', approx: true, amp: (ctx) => (ctx.t > 3 ? 1.06 : 1) },
+  'spear of shojin': { desc: 'Ability damage ramps up (≈+8%)', approx: true, amp: (ctx) => (!ctx.tags.auto && ctx.t > 2 ? 1.08 : 1) },
+  "luden's companion": { desc: 'First ability hit: bonus magic burst', approx: true, onSpellHit: (ctx) => { if (ctx.t - (ctx.u.st.ludenT ?? -99) < 12) return; ctx.u.st.ludenT = ctx.t; ctx.sim.deal(ctx.u, ctx.tgt, 150 + 0.2 * ctx.ap, M, { label: 'Fire', rune: true }) } },
+  'blackfire torch': { desc: 'Abilities burn (smaller Liandry)', approx: true, onSpellHit: (ctx) => ctx.sim.addDot(ctx.u, ctx.tgt, M, 20 + 0.03 * ctx.ap * 3, 3, 'Baleful Blaze', 'torch') },
+  'muramana': { desc: 'On-hit: % of max mana', onHit: (ctx) => [{ dt: P, raw: 0.015 * ctx.u.stats.mana, label: 'Shock' }] },
+  'experimental hexplate': { desc: 'After your ultimate: +30% attack speed for 8s', ultHaste: 30, afterUlt: (ctx) => ctx.giveBuff('asPct', 30, 8, 'Overdrive') },
+  'guardian angel': { desc: 'Revive once at 50% base HP after 4s', revive: (u) => 0.5 * u.stats.baseHp + 0.3 * (u.stats.mana || 0) },
+  "seraph's embrace": { desc: 'Shield when under 30% HP', lowHp: { at: 0.3, fn: (u, sim) => sim.addShield(u, 200 + 0.2 * (u.stats.mana || 0), 3, 'Lifeline') } },
+  'hubris': { desc: 'Takedowns give AD (assumes 10 stacks: +25 AD)', approx: true, stats: { ad: 25 } },
+  "jak'sho, the protean": { desc: 'Resists grow in combat (≈+15% after 3s)', approx: true, onHit: (ctx) => { if (ctx.t >= 3 && !ctx.u.st.jak) { ctx.u.st.jak = true; ctx.giveBuff('armor', 0.15 * ctx.u.stats.armor, 30, 'Voidborn'); ctx.giveBuff('mr', 0.15 * ctx.u.stats.mr, 30, 'Voidborn') } return [] } },
 }
 
 // Effect for an item, by its English name.

@@ -90,7 +90,8 @@ export function normalize({ version, champs, itemsEn, itemsLoc, runes, summs }) 
       effect: itemEffect(en.name),
       image: en.image?.full,
       tags: en.tags || [],
-      complete: !(en.into && en.into.length) || (en.tags || []).includes('Boots'),
+      starter: isStarterRaw(en),
+      complete: !(en.into && en.into.length) || (en.tags || []).includes('Boots') || isStarterRaw(en),
       plaintext: loc.plaintext || '',
     }
   }
@@ -114,12 +115,18 @@ export function normalize({ version, champs, itemsEn, itemsLoc, runes, summs }) 
   return { version, champions, items, trees, runeByKey, summoners }
 }
 
+// Starter items: Doran's, Cull, Dark Seal, Tear, World Atlas, jungle pets…
+export const isStarterRaw = (it) =>
+  (it.gold?.total ?? it.gold) <= 500 &&
+  ((it.tags || []).includes('Lane') || /Doran|Cull|Dark Seal|Tear of the Goddess|World Atlas|Seedling|Pup|Hatchling/i.test(it.name))
+
 function keepItem(it) {
   if (!it.maps?.['11']) return false
   if (!it.gold?.purchasable || it.gold.total < 300) return false
   if (it.consumed || it.requiredChampion || it.requiredAlly || it.inStore === false) return false
   const tags = it.tags || []
-  if (tags.includes('Consumable') || tags.includes('Trinket') || tags.includes('Jungle')) return false
+  if (tags.includes('Consumable') || tags.includes('Trinket')) return false
+  if (tags.includes('Jungle') && !isStarterRaw(it)) return false
   return true
 }
 

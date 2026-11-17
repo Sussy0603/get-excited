@@ -46,7 +46,7 @@ export const atRank = (v, rank) =>
   Array.isArray(v) ? v[Math.max(0, Math.min(v.length - 1, rank - 1))] : v ?? 0
 
 // Value that scales with champion level from min (lvl 1) to max (lvl 18).
-export const byLevel = (min, max, level) => min + ((max - min) * (level - 1)) / 17
+export const byLevel = (min, max, level) => min + ((max - min) * (Math.min(18, level) - 1)) / 17
 
 // Spell shortcut: S(cd, range, effects, extras)
 export const S = (cd, range, effects, x = {}) => ({ cd, range, effects, cast: 0.25, ...x })

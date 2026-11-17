@@ -83,7 +83,7 @@ export function ItemPicker({ onPick, onClose, exclude = [], allowItems = true, a
     return Object.values(data.items)
       .filter((it) => !exclude.includes(it.id))
       .filter((it) => (isBoots(it) ? allowBoots : allowItems))
-      .filter((it) => (complete ? (it.complete && (it.gold >= 900 || isBoots(it))) : true))
+      .filter((it) => (complete ? (it.complete && (it.gold >= 900 || isBoots(it) || it.starter)) : true))
       .filter((it) => it.gold <= maxPrice)
       .filter((it) => stats.every((id) => STAT_FILTERS.find((f) => f.id === id).test(it.stats || {}, it)))
       .filter((it) => { if (!words.length) return true; const txt = searchText(it); return words.every((w) => txt.includes(w)) })
@@ -145,7 +145,7 @@ export function ItemPicker({ onPick, onClose, exclude = [], allowItems = true, a
             {role === 'all' && <h3 style={{ margin: '8px 0' }}>{L(ROLE_LABEL[sec.id], lang)}</h3>}
             <div className="grid-pick" style={{ padding: 0 }}>
               {sec.items.map((it) => (
-                <button key={it.id} className="pick" onClick={() => onPick(it.id)} title={`${it.name} — ${statLine(it, lang)}${it.effect ? `\n★ ${it.effect.desc}` : ''}`}>
+                <button key={it.id} className="pick" onClick={() => onPick(it.id)} title={`${it.name} — ${statLine(it, lang)}${it.effect ? `\n★ ${it.effect.desc}${it.effect.approx ? ' (≈)' : ''}` : ''}`}>
                   <ItemIcon id={it.id} />
                   <span>{it.name}{it.effect ? ' ★' : ''}</span>
                   <span className="gold">{it.gold}</span>

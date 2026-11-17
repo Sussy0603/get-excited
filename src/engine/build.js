@@ -64,12 +64,22 @@ export function buildUnit(cfg, data, key) {
   const level = cfg.level || 1
   const stats = computeStats({ champ, def, level, items, shards: cfg.shards || [], extra, baseCritDmg: baseCritFor(data.version) })
   if (def?.rangePerLevel) stats.range += def.rangePerLevel * (level - 1)
+  // Multipliers (e.g. Rabadon's Deathcap: +30% AP)
+  for (const it of items) {
+    if (it.effect?.apMult) stats.ap *= it.effect.apMult
+  }
   for (const r of runes) {
     if (r.statsPct?.hp) { const add = stats.hp * r.statsPct.hp; stats.hp += add; stats.bonusHp += add }
   }
 
+  // Resource (mana / energy / none) for the optional resource mode
+  const b = champ.stats
+  stats.manaRegen = (b.mpregen != null ? b.mpregen + (b.mpregenperlevel || 0) * (level - 1) : 8) / 5
+  const partype = champ.partype === 'Energy' ? 'energy' : champ.partype === 'Mana' || champ.partype == null ? 'mana' : 'none'
+
   return {
     key,
+    partype,
     name: champ.name,
     champId: champ.id,
     level,

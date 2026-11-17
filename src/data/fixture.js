@@ -49,6 +49,8 @@ export const FIXTURE = {
       ...item('3157', 'Zhonya\'s Hourglass', 3250, `${a(105, 'Ability Power')}<br>${a(50, 'Armor')}`),
       ...item('3071', 'Black Cleaver', 3000, `${a(40, 'Attack Damage')}<br>${a(400, 'Health')}<br>${a(20, 'Ability Haste')}`),
       ...item('3053', 'Sterak\'s Gage', 3200, `${a(400, 'Health')}`),
+      ...item('1055', 'Doran\'s Blade', 450, `${a(10, 'Attack Damage')}<br>${a(80, 'Health')}`, { tags: ['Lane'] }),
+      ...item('1056', 'Doran\'s Ring', 400, `${a(18, 'Ability Power')}<br>${a(90, 'Health')}`, { tags: ['Lane'] }),
     },
   },
   runes: [

@@ -48,7 +48,7 @@ function shardStats(shards = [], level, adaptiveIsAd) {
     if (id === 'as') s.asPct += 10
     if (id === 'ah') s.ah += 8
     if (id === 'ms') s.msPct += 0.02
-    if (id === 'hpScale') s.hp += 10 + (170 / 17) * (level - 1)
+    if (id === 'hpScale') s.hp += 10 + (170 / 17) * (Math.min(18, level) - 1)
     if (id === 'hpFlat') s.hp += 65
   }
   return s
@@ -135,7 +135,7 @@ export function ranksAt(level, maxOrder = ['Q', 'W', 'E']) {
   const [P, S, T] = maxOrder
   const path = [P, S, T, P, P, 'R', P, S, P, S, 'R', S, S, T, T, 'R', T, T]
   const r = { Q: 0, W: 0, E: 0, R: 0 }
-  for (let i = 0; i < level; i++) r[path[i]]++
+  for (let i = 0; i < Math.min(18, level); i++) r[path[i]]++
   return r
 }
 

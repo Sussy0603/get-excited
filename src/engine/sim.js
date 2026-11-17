@@ -78,7 +78,18 @@ class Sim {
       killedBy: null,
       totals: { physical: 0, magic: 0, true: 0, heal: 0, shield: 0, taken: 0, burst: 0, dealtTo: {} },
       firstHitT: null,
+      res: b.partype === 'energy' ? 200 : (b.stats.mana || 0),
+      resMax: b.partype === 'energy' ? 200 : (b.stats.mana || 0),
     }
+  }
+
+  // Estimated costs (exact costs per champion aren't in Riot's data).
+  costOf(u, key, rank) {
+    const sp = u.def?.spells?.[key]
+    if (sp?.cost != null) return atRank(sp.cost, rank)
+    if (u.partype === 'energy') return key === 'R' ? 0 : 50
+    if (u.partype !== 'mana') return 0
+    return key === 'R' ? 100 : 40 + 10 * rank
   }
 
   // ── Main loop ────────────────────────────────────────────
@@ -91,6 +102,11 @@ class Sim {
       if (this.t > duration) break
       this.runQueue()
       this.tickDots()
+      if (this.opts.resource) for (const u of this.units) {
+        if (u.dead || u.partype === 'none') continue
+        const regen = u.partype === 'energy' ? 10 : (u.stats.manaRegen || 1.5)
+        u.res = Math.min(u.resMax, u.res + regen * dt)
+      }
       for (const u of this.units) if (!u.dead) this.act(u)
       if (record && this.t >= nextFrame - 1e-9) { this.snap(); nextFrame += frameEvery }
       if (this.done()) break
@@ -164,13 +180,17 @@ class Sim {
     if (this.t < (u.cds[key] || 0)) return false
     if (sp.when === 'never') return false
     if (key === 'R' && tgt.minion) return false // nobody ults a minion wave
-    if (sp.when === 'lowhp' && u.hp / u.maxHp > 0.6) return false
+    const friend = sp.ally || sp.allyOnly ? this.lowestAlly(u, sp.allyOnly) : null
+    if ((sp.ally || sp.allyOnly) && !friend) return false
+    if (sp.when === 'lowhp' && (friend || u).hp / (friend || u).maxHp > 0.6) return false
     if (sp.ready && !sp.ready(ctx)) return false
+    if (this.opts.resource && this.costOf(u, key, rank) > u.res) return false
     const hasDmg = sp.effects.some((e) => e.t === 'dmg' || e.t === 'dot')
     if (tgt.structure && hasDmg && !sp.effects.some((e) => e.onHit)) return false // spells don't hurt towers
     const range = atRank(sp.range, rank)
     const dashTo = sp.effects.find((e) => e.t === 'dash' && e.dir === 'to')
-    if (range === 0) {
+    const supportOnly = (sp.ally || sp.allyOnly) && sp.effects.every((e) => e.t === 'heal' || e.t === 'shield' || e.t === 'buff')
+    if (supportOnly) { /* ally in reach: no enemy range needed */ } else if (range === 0) {
       if (d > this.range(u) + RADIUS + 300) return false // don't pop buffs from across the map
     } else if (d > range + (dashTo && this.opts.positioning ? dashTo.dist : 0) + RADIUS) return false
     if (sp.when === 'execute') {
@@ -185,9 +205,11 @@ class Sim {
     const t = this.t
     let cd = atRank(sp.cd, rank)
     if (u.def?.hooks?.cdMod) cd = u.def.hooks.cdMod(u, key, cd)
-    u.cds[key] = t + hasteCd(cd, this.ah(u))
+    const ultHaste = key === 'R' ? u.itemFx.reduce((a, f) => a + (f.ultHaste || 0), 0) + this.runeSum(u, 'ultHaste') : 0
+    u.cds[key] = t + hasteCd(cd, this.ah(u) + ultHaste)
     u.lockUntil = t + (sp.cast ?? 0.25)
     u.used[key] = (u.used[key] || 0) + 1
+    if (this.opts.resource) u.res -= this.costOf(u, key, rank)
     if (u.itemFx.some((f) => f.spellblade) && t >= (u.sbCd || 0)) u.spellbladeReady = true
     const castId = ++this.castSeq
     this.push({ kind: 'cast', src: u.key, tgt: tgt.key, label: key })
@@ -216,8 +238,16 @@ class Sim {
           }
           break
         case 'buff': this.giveBuff(u, e.stat, atRank(e.val, rank), atRank(e.dur, rank), key); break
-        case 'shield': this.addShield(u, this.raw(e, rank, u, tgt), atRank(e.dur, rank), key); break
-        case 'heal': this.healUnit(u, this.raw(e, rank, u, tgt) + (e.miss || 0) * (u.maxHp - u.hp), key); break
+        case 'shield': {
+          const who = sp.ally || sp.allyOnly ? this.lowestAlly(u, sp.allyOnly) || u : u
+          this.addShield(who, this.raw(e, rank, u, tgt), atRank(e.dur, rank), who === u ? key : `${key} → ${who.name}`)
+          break
+        }
+        case 'heal': {
+          const who = sp.ally || sp.allyOnly ? this.lowestAlly(u, sp.allyOnly) || u : u
+          this.healUnit(who, this.raw(e, rank, u, tgt) + (e.miss || 0) * (who.maxHp - who.hp), who === u ? key : `${key} → ${who.name}`)
+          break
+        }
         case 'cc': for (const x of area) this.stun(x, atRank(e.dur, rank), u); break
         case 'dash': this.doDash(u, tgt, e.dist, e.dir); break
         case 'empower': u.empower.push({ n: e.n, effect: e.effect, rank, key }); break
@@ -226,6 +256,8 @@ class Sim {
       }
     }
     u.def?.hooks?.onSpell?.(ctx, key)
+    if (key === 'R') for (const f of u.itemFx) f.afterUlt?.(ctx)
+    for (const f of u.itemFx) f.onCast?.(ctx, key)
 
     for (const x of hit) {
       const c = this.ctx(u, x)
@@ -334,10 +366,12 @@ class Sim {
     ctx.tags = tags
     let amp = 1
     for (const r of src.runes) if (r.amp) amp *= r.amp(ctx)
+    for (const f of src.itemFx) if (f.amp) amp *= f.amp(ctx)
     if (t < src.exhaustUntil) amp *= 0.65
 
     let dmg = mitigate(raw * amp, type, this.penStats(src), this.defStats(tgt))
     dmg *= 1 - Math.min(0.8, this.buffSum(tgt, 'dmgRed'))
+    for (const f of tgt.itemFx) if (f.takenMult) dmg *= f.takenMult(type)
 
     // Bone Plating: next 3 hits from a champ reduced (55s cooldown)
     const bp = tgt.runes.find((r) => r.takenFlat)
@@ -376,11 +410,12 @@ class Sim {
     // Healing from damage: life steal (attacks), omnivamp (all), Conqueror
     let h = 0
     if (tags.auto) h += dmg * this.lifesteal(src)
-    h += dmg * (src.stats.omnivamp || 0) * (tags.dot ? 0.33 : 1)
+    h += dmg * ((src.stats.omnivamp || 0) + this.buffSum(src, 'omnivampBuff')) * (tags.dot ? 0.33 : 1)
     for (const r of src.runes) if (r.healOnDmg) h += dmg * r.healOnDmg(src)
     if (h > 0) this.healUnit(src, h, null, true)
 
     tgt.def?.hooks?.onTakeDamage?.(tgt, dmg)
+    if (!src.dummy && !tags.dot) for (const r of tgt.runes) r.onTaken?.(this.ctx(tgt, src), dmg)
 
     // Thornmail / Bramble reflect on basic attacks
     if (tags.auto && !tags.onHit && !tags.reflect) {
@@ -409,6 +444,15 @@ class Sim {
   }
 
   kill(u, src) {
+    // Guardian Angel: revive once
+    const ga = u.itemFx.find((f) => f.revive)
+    if (ga && !u.revived) {
+      u.revived = true
+      u.hp = 0.0001
+      this.stasis(u, 4, 'Guardian Angel')
+      this.later(4, () => { if (!u.dead) { u.hp = Math.min(u.maxHp, ga.revive(u)); this.push({ kind: 'heal', src: u.key, tgt: u.key, label: 'Revived', amount: u.hp }) } })
+      return
+    }
     u.dead = true
     u.hp = 0
     u.deathT = this.t
@@ -417,9 +461,13 @@ class Sim {
     // Takedown passives: anyone who hit this unit in the last 3s.
     if (u.dummy) return
     for (const x of this.units) {
-      if (x.dead || x.side === u.side || !x.def?.hooks?.onTakedown) continue
+      if (x.dead || x.side === u.side) continue
       const last = u.tstate[x.key]?.lastHitT
-      if (last != null && this.t - last <= 3) x.def.hooks.onTakedown(this.ctx(x, u))
+      if (last == null || this.t - last > 3) continue
+      const c = this.ctx(x, u)
+      x.def?.hooks?.onTakedown?.(c)
+      for (const f of x.itemFx) f.onTakedown?.(c)
+      for (const r of x.runes) r.onTakedown?.(c)
     }
   }
 
@@ -464,6 +512,13 @@ class Sim {
         this.push({ kind: 'cast', src: u.key, tgt: tgt.key, label: 'Flash' })
       }
     }
+  }
+
+  // Lowest-HP teammate (by %). allyOnly = can't pick yourself.
+  lowestAlly(u, allyOnly = false) {
+    const team = this.units.filter((x) => x.side === u.side && !x.dead && !x.dummy && (!allyOnly || x !== u))
+    if (!team.length) return null
+    return team.reduce((a, b) => (b.hp / b.maxHp < a.hp / a.maxHp ? b : a))
   }
 
   // ── Effects helpers (also used by champ/item/rune hooks) ─

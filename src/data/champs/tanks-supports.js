@@ -5,7 +5,7 @@
 import { P, M, T, S, dmg, dot, buff, shield, heal, cc, dash, empower, reset, invuln, atRank, byLevel } from './_helpers.js'
 
 const lvl = (ctx) => ctx.u.stats.level
-const SIMPLE = 'Simplified kit: main damage, CC, shields/heals (support heals/shields go on themselves).'
+const SIMPLE = 'Simplified kit: main damage, CC, shields/heals. In team fights, support heals/shields go to the lowest-HP ally.'
 
 export const TANKS_SUPPORTS = {
   Alistar: {
@@ -260,7 +260,7 @@ export const TANKS_SUPPORTS = {
     notes: `${SIMPLE} Heals herself (Q heal over time). Ally heals not simulated.`,
     spells: {
       Q: S([7, 6.5, 6, 5.5, 5], 800, [dmg(M, [85, 120, 155, 190, 225], { ap: 0.35 }), heal([50, 65, 80, 95, 110], { ap: 0.3 })], { aoe: true }),
-      W: S([6, 5, 4, 3, 2], 550, [], { when: 'never' }),
+      W: S([6, 5, 4, 3, 2], 550, [heal([100, 140, 180, 220, 260], { ap: 0.5 })], { cast: 0.25, when: 'lowhp', allyOnly: true }),
       E: S(20, 925, [dmg(M, [70, 95, 120, 145, 170], { ap: 0.4 }, { hits: 2 }), cc([1, 1.25, 1.5, 1.75, 2])], { cast: 1.5, aoe: true }),
       R: S([160, 145, 130], 25000, [heal([150, 250, 350], { ap: 0.55 })], { cast: 0, when: 'lowhp' }),
     },

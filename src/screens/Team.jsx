@@ -21,8 +21,8 @@ export default function Team() {
     const A = allies.map((c, i) => (c ? buildUnit(c, data, `A${i}`) : null)).filter(Boolean)
     const B = enemies.map((c, i) => (c ? buildUnit(c, data, `B${i}`) : null)).filter(Boolean)
     if (!A.length || !B.length) return null
-    return fight(A, B, { twoWay: true, positioning: state.opts.positioning })
-  }, [allies, enemies, data, state.opts.positioning])
+    return fight(A, B, { twoWay: true, positioning: state.opts.positioning, resource: state.opts.resource })
+  }, [allies, enemies, data, state.opts.positioning, state.opts.resource])
 
   const setAlly = (i, cfg) => update((s) => { s.allies[i] = cfg })
   const setTarget = (side, i, key) => update((s) => { s[side][i].target = key || null })
@@ -62,6 +62,7 @@ export default function Team() {
         </div>
         <div className="row">
           <label className="toggle"><input type="checkbox" checked={state.opts.positioning} onChange={(e) => update((s) => { s.opts.positioning = e.target.checked })} /> {t('positioning')}</label>
+          <label className="toggle" title={t('resource_hint')}><input type="checkbox" checked={!!state.opts.resource} onChange={(e) => update((s) => { s.opts.resource = e.target.checked })} /> {t('resource')}</label>
           <ShareBar targetRef={exportRef} route="team" />
         </div>
       </div>

@@ -11,23 +11,25 @@ export const MARKSMEN = {
   // ── JINX ──────────────────────────────────────────────────
   Jinx: {
     asRatio: 0.625,
-    notes: 'Minigun stacks to 3. Rockets used only when the target is out of minigun range (positioning mode). Get Excited!: takedowns give a big move speed burst (positioning mode).',
+    notes: 'Checked vs patch 26 data (W, Q, R). Minigun: 3 stacks, +30–130% AS. Rockets (positioning mode, out of minigun range): +100–200 range, 110% AD splash, 10% less bonus AS. Get Excited!: takedowns give move + attack speed (AS value estimated).',
     spells: {
       Q: { toggle: true, cd: 0.9, range: 0, effects: [] },
-      W: S([8, 7, 6, 5, 4], 1450, [dmg(P, [10, 60, 110, 160, 210], { ad: 1.6 }), ], { cast: 0.5 }),
+      W: S([8, 7, 6, 5, 4], 1450, [dmg(P, [10, 60, 110, 160, 210], { ad: 1.4 })], { cast: 0.5 }),
       E: S([24, 20.5, 17, 13.5, 10], 900, [dmg(M, [70, 120, 170, 220, 270], { ap: 1 }), cc(1.5)], { cast: 0.4, aoe: true }),
-      R: S([85, 65, 45], 25000, [dmg(P, [300, 450, 600], { bad: 1.5, tmiss: [0.25, 0.3, 0.35] })], { cast: 0.6, when: 'execute', aoe: true }),
+      R: S([85, 65, 45], 25000, [dmg(P, [200, 350, 500], { bad: 1.2, tmiss: [0.25, 0.3, 0.35] })], { cast: 0.6, when: 'execute', aoe: true }),
     },
     combo: ['W', 'E', 'R'],
     hooks: {
       init: (u) => { u.st.rev = 0; u.st.rocket = false },
       // Rockets: +range, 110% damage, splash. Minigun: stacking attack speed.
-      rangeBonus: (u, rank) => (u.st.rocket ? atRank([80, 110, 140, 170, 200], rank.Q) : 0),
-      asBonus: (u, rank) => (u.st.rocket ? 0 : u.st.rev * atRank([10, 17.5, 25, 32.5, 40], rank.Q)),
+      rangeBonus: (u, rank) => (u.st.rocket ? atRank([100, 125, 150, 175, 200], rank.Q) : 0),
+      // Minigun: up to 3 stacks, +30–130% total. Rockets: 10% less bonus attack speed.
+      asBonus: (u, rank) => (u.st.rocket ? -0.1 * (u.stats.bonusAsPct || 0) : u.st.rev * atRank([30, 55, 80, 105, 130], rank.Q) / 3),
       attackMult: (ctx) => (ctx.u.st.rocket ? 1.1 : 1),
       onAttack: (ctx) => { if (!ctx.u.st.rocket) ctx.u.st.rev = Math.min(3, ctx.u.st.rev + 1) },
       // Get Excited! — 175% move speed decaying over 6s (≈ +90% on average)
-      onTakedown: (ctx) => { ctx.giveBuff('msPct', 0.9, 6, 'Get Excited!'); ctx.sim.push({ kind: 'buff', src: ctx.u.key, tgt: ctx.u.key, label: 'Get Excited!' }) },
+      // ⚠ exact attack speed value not confirmed — +50% (decaying) used
+      onTakedown: (ctx) => { ctx.giveBuff('msPct', 0.9, 6, 'Get Excited!'); ctx.giveBuff('asPct', 50, 6, 'Get Excited!'); ctx.sim.push({ kind: 'buff', src: ctx.u.key, tgt: ctx.u.key, label: 'Get Excited!' }) },
       // Positioning: switch to rockets if the target is out of minigun range.
       beforeAct: (ctx) => {
         if (!ctx.rank.Q) return

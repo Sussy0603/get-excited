@@ -10,9 +10,10 @@ import Team from './screens/Team.jsx'
 import Compare from './screens/Compare.jsx'
 import Saved from './screens/Saved.jsx'
 import Overlay from './screens/Overlay.jsx'
+import ChampPage, { ChampIndex } from './screens/ChampPage.jsx'
 
 const SCREENS = { calc: Calculator, enemies: Enemies, team: Team, compare: Compare, saved: Saved }
-const TABS = [['calc', 'nav_calc'], ['enemies', 'nav_enemies'], ['team', 'nav_team'], ['compare', 'nav_compare'], ['saved', 'nav_saved']]
+const TABS = [['calc', 'nav_calc'], ['enemies', 'nav_enemies'], ['team', 'nav_team'], ['compare', 'nav_compare'], ['builds', 'nav_champs'], ['saved', 'nav_saved']]
 
 export default function App() {
   const { state, update, data, route, t, saved } = useStore()
@@ -37,7 +38,8 @@ export default function App() {
   if (!data) return <div className="loading"><span className="spin">{t('loading')}</span></div>
   if (route.route === 'overlay') return <Overlay />
 
-  const Screen = SCREENS[route.route] || Calculator
+  const [section, sub] = (route.route || 'calc').split('/')
+  const Screen = section === 'builds' ? (sub ? () => <ChampPage champId={sub} /> : ChampIndex) : SCREENS[section] || Calculator
   const enemyCount = state.enemies.filter(Boolean).length
 
   return (
@@ -52,7 +54,7 @@ export default function App() {
           <a className="logo" href="#/calc" aria-label="Get Excited — home">GET <span>EXCITED</span><small>{t('tagline')}</small></a>
           <nav className="nav" aria-label="Main">
             {TABS.map(([id, key]) => (
-              <a key={id} href={`#/${id}`} aria-current={(route.route || 'calc') === id ? 'page' : undefined}>
+              <a key={id} href={`#/${id}`} aria-current={section === id ? 'page' : undefined}>
                 {t(key)}
                 {id === 'enemies' && enemyCount > 0 && <span className="tiny"> ({enemyCount})</span>}
                 {id === 'saved' && saved.length > 0 && <span className="tiny"> ({saved.length})</span>}

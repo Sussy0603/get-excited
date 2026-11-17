@@ -4,7 +4,7 @@
 // the same way the in-game shop groups them.
 // ─────────────────────────────────────────────────────────────
 
-export const ROLES = ['Fighter', 'Marksman', 'Assassin', 'Mage', 'Tank', 'Support', 'Boots']
+export const ROLES = ['Starter', 'Fighter', 'Marksman', 'Assassin', 'Mage', 'Tank', 'Support', 'Boots']
 export const ROLE_LABEL = {
   Fighter: { en: 'Fighter', fr: 'Combattant' },
   Marksman: { en: 'Marksman', fr: 'Tireur' },
@@ -13,6 +13,7 @@ export const ROLE_LABEL = {
   Tank: { en: 'Tank', fr: 'Tank' },
   Support: { en: 'Support', fr: 'Support' },
   Boots: { en: 'Boots', fr: 'Bottes' },
+  Starter: { en: 'Starter', fr: 'Départ' },
   Other: { en: 'Other', fr: 'Autres' },
 }
 
@@ -22,6 +23,7 @@ export const isBoots = (it) => !!it && (it.tags || []).includes('Boots')
 export function itemRoles(it) {
   if (!it) return []
   if (isBoots(it)) return ['Boots']
+  if (it.starter) return ['Starter']
   const s = it.stats || {}
   const tags = it.tags || []
   const r = []

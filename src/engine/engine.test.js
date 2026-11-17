@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest'
 import { growth, ranksAt, computeStats } from './stats.js'
 import { resistMultiplier, effectiveResist, mitigate, critAverage, ehp } from './damage.js'
 import { buildUnit, buildDummies, newConfig } from './build.js'
-import { dummyRun, fight, effectiveHp, bestOrder } from './metrics.js'
+import { dummyRun, fight, effectiveHp, bestOrder, bestNextItem } from './metrics.js'
 import { normalize, parseItemStats } from '../data/ddragon.js'
 import { FIXTURE } from '../data/fixture.js'
 import { CHAMP_DEFS } from '../data/champs/index.js'
@@ -138,4 +138,54 @@ describe('every hand-made champion runs without errors', () => {
       }
     })
   }
+})
+
+describe('2026 items & revive', () => {
+  it('Guardian Angel revives once', () => {
+    const items = { ...data.items, GA: { id: 'GA', name: 'Guardian Angel', enName: 'Guardian Angel', gold: 3200, stats: { ad: 55, armor: 45 }, effect: { revive: (u) => 0.5 * u.stats.baseHp }, tags: [] } }
+    const d2 = { ...data, items }
+    const lux = buildUnit(cfg('Lux', { level: 6, items: ['GA'] }), d2, 'B0')
+    const jinx = buildUnit(cfg('Jinx', { level: 18, items: ['3031', '6672'] }), d2, 'A0')
+    const r = fight([jinx], [lux], { twoWay: false })
+    expect(r.log.some((e) => e.label === 'Guardian Angel')).toBe(true)
+    expect(r.log.filter((e) => e.kind === 'death').length).toBe(1)
+  })
+})
+
+describe('mana & level 20', () => {
+  it('mana mode limits spell casts', () => {
+    const local = { ...data, champions: { ...data.champions, Ezreal: { ...data.champions.Jinx, id: 'Ezreal', name: 'Ezreal', partype: 'Mana' } } }
+    const me = () => buildUnit(cfg('Ezreal', { level: 11, maxOrder: ['Q', 'E', 'W'] }), local, 'A0')
+    const foe = () => buildUnit(cfg('Garen', { level: 18, items: ['3075', '3065', '3053'] }), data, 'B0')
+    const casts = (o) => fight([me()], [foe()], { twoWay: false, ...o }).log.filter((e) => e.kind === 'cast').length
+    expect(casts({ resource: true })).toBeLessThan(casts({ resource: false }))
+  })
+  it('level 20 keeps growing base stats but caps ranks at 18', () => {
+    const l18 = buildUnit(cfg('Garen', { level: 18 }), data, 'A0')
+    const l20 = buildUnit(cfg('Garen', { level: 20 }), data, 'A0')
+    expect(l20.stats.hp).toBeGreaterThan(l18.stats.hp)
+    expect(l20.ranks).toEqual(l18.ranks)
+  })
+})
+
+describe('support heals allies', () => {
+  it('Janna shields the lowest-HP teammate', () => {
+    const local = { ...data, champions: { ...data.champions, Janna: { ...data.champions.Lux, id: 'Janna', name: 'Janna' } } }
+    const janna = buildUnit(cfg('Janna', { level: 11 }), local, 'A1')
+    const jinx = buildUnit(cfg('Jinx', { level: 11 }), local, 'A0')
+    const darius = buildUnit(cfg('Darius', { level: 13, items: ['3071'], target: 'A0' }), local, 'B0')
+    const r = fight([jinx, janna], [darius], { twoWay: true })
+    expect(r.log.some((e) => e.kind === 'shield' && e.tgt === 'A0' && e.label.startsWith('E'))).toBe(true)
+  })
+})
+
+describe('best next item + starters', () => {
+  it('ranks a damage item above a tank item for Jinx', () => {
+    const foe = buildUnit(cfg('Garen', { level: 11 }), data, 'B0')
+    const rows = bestNextItem(cfg('Jinx', { level: 11, items: ['3006'] }), data, buildUnit, [foe], ['3075', '3031', '3065'])
+    expect(rows[0].id).toBe('3031')
+  })
+  it('starter items are in their own category', () => {
+    expect(data.items['1055'].starter).toBe(true)
+  })
 })

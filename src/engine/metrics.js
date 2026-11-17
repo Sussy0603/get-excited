@@ -94,3 +94,17 @@ export function bestOrder(cfg, data, build, foes, opts = {}) {
   }
   return order
 }
+
+/**
+ * Best next item vs a target: try every allowed item, rank by time-to-kill.
+ * candidates = item ids to try. Returns [{ id, ttk, dps, gain, gold }] best first.
+ */
+export function bestNextItem(cfg, data, build, foes, candidates, opts = {}) {
+  const base = dummyRun(build(cfg, data, 'A0'), foes, { ...opts, record: false })
+  const baseTtk = base.ttk ?? 30
+  return candidates.map((id) => {
+    const r = dummyRun(build({ ...cfg, items: [...cfg.items, id] }, data, 'A0'), foes, { ...opts, record: false })
+    const ttk = r.ttk ?? 30
+    return { id, ttk: r.ttk, dps: r.dps, gain: baseTtk - ttk, dpsGain: r.dps - base.dps, gold: data.items[id]?.gold || 0 }
+  }).sort((a, b) => (a.ttk ?? 99) - (b.ttk ?? 99) || b.dps - a.dps)
+}

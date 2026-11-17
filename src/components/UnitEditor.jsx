@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react'
 import { useStore, configFor } from '../state/store.jsx'
 import Icon, { ChampIcon, ItemIcon } from './Icon.jsx'
 import { ChampPicker, ItemPicker } from './Pickers.jsx'
-import { CHAMP_DEFS, VERIFIED, abilityStatus, defaultCombo, kitLevel } from '../data/champs/index.js'
+import { CHAMP_DEFS, VERIFIED, DATA_CHECKED, abilityStatus, defaultCombo, kitLevel } from '../data/champs/index.js'
 import { SUMMONERS } from '../data/runes.js'
 import RunePage from './RunePage.jsx'
 import { SHARDS, SHARD_ROWS } from '../engine/stats.js'
@@ -31,6 +31,7 @@ export function StatusChip({ champId }) {
   const { t } = useStore()
   if (abilityStatus(champId) !== 'full') return <span className="chip warn" title={t('autos_only')}>⚠ {t('autos_only')}</span>
   if (VERIFIED.has(champId)) return <span className="chip ok">✔ {t('verified')}</span>
+  if (DATA_CHECKED.has(champId)) return <span className="chip cyan" title={t('data_checked_hint')}>🔎 {t('data_checked')}</span>
   if (kitLevel(champId) === 'simplified') return <span className="chip warn" title={t('unverified')}>◐ {t('simplified')}</span>
   return <span className="chip cyan" title={t('unverified')}>◐ {t('unverified')}</span>
 }
@@ -80,7 +81,8 @@ export default function UnitEditor({ cfg, onChange, label, accent = 'cyan', onRe
       <div className="section">
         <label className="field">
           <span className="row" style={{ justifyContent: 'space-between' }}><span>{t('level')}</span><b className="num" style={{ color: 'var(--ink)' }}>{cfg.level}</b></span>
-          <input type="range" min="1" max="18" value={cfg.level} onChange={(e) => set({ level: +e.target.value })} aria-label={t('level')} />
+          <input type="range" min="1" max="20" value={cfg.level} onChange={(e) => set({ level: +e.target.value })} aria-label={t('level')} />
+          {cfg.level > 18 && <span className="tiny" style={{ color: 'var(--yellow)' }}>{t('lvl20')}</span>}
         </label>
       </div>
 

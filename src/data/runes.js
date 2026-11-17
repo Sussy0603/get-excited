@@ -192,6 +192,51 @@ export const RUNE_EFFECTS = {
     desc: '+AD/AP while above 70% HP',
     adBonus: (u) => (u.hp / u.maxHp > 0.7 ? byLevel(1.8, 18, u.stats.level) * (u.stats.bonusAd >= u.stats.ap ? 1 : 0) : 0),
   },
+
+  // ── The rest of the rune tree ─────────────────────────────
+  Triumph: { desc: 'Takedowns heal 10% missing HP', onTakedown: (ctx) => ctx.sim.healUnit(ctx.u, 0.1 * (ctx.u.maxHp - ctx.u.hp), 'Triumph') },
+  AbsorbLife: { desc: 'Takedowns heal (approx.)', onTakedown: (ctx) => ctx.sim.healUnit(ctx.u, 0.04 * ctx.u.maxHp, 'Absorb Life') },
+  PresenceOfMind: { desc: 'Mana on takedown', noCombat: true },
+  NullifyingOrb: {
+    desc: 'Magic shield when low',
+    onTaken: (ctx) => {
+      if (ctx.u.st.orbUsed || ctx.u.hp / ctx.u.maxHp > 0.35) return
+      ctx.u.st.orbUsed = true
+      ctx.sim.addShield(ctx.u, byLevel(35, 110, L(ctx.u)) + 0.15 * ctx.u.stats.bonusAd + 0.1 * ctx.u.stats.ap, 4, 'Nullifying Orb', 'magic')
+    },
+  },
+  ManaflowBand: { desc: 'Bonus mana', noCombat: true },
+  NimbusCloak: { desc: 'Move speed after summoner spells', noCombat: true },
+  Transcendence: { desc: '+10 ability haste (level 8+)', stats: (u) => ({ ah: u.stats.level >= 8 ? 10 : u.stats.level >= 5 ? 5 : 0 }) },
+  Celerity: { desc: 'Move speed bonuses', noCombat: true },
+  GatheringStorm: { desc: 'Adaptive stats that grow with game time (≈ by level)', stats: (u) => (u.stats.level >= 13 ? { ad: 21, ap: 0 } : u.stats.level >= 9 ? { ad: 12 } : { ad: 5 }) },
+  Waterwalking: { desc: 'River bonuses', noCombat: true },
+  Demolish: { desc: 'Bonus damage to towers', onHit: (ctx) => { if (!ctx.tgt.structure || ctx.t - (ctx.u.st.demoT ?? -99) < 45) return []; ctx.u.st.demoT = ctx.t; return [{ dt: 'physical', raw: 100 + 0.35 * ctx.u.stats.bonusHp, label: 'Demolish' }] } },
+  FontOfLife: { desc: 'Heals allies who hit marked enemies', noCombat: true },
+  ShieldBash: { desc: 'Attacks while shielded hit harder', onHit: (ctx) => (ctx.sim.shieldOf(ctx.u) > 0 ? [{ dt: adaptive(ctx.u), raw: byLevel(5, 30, L(ctx.u)) + 0.015 * ctx.u.stats.bonusHp + 0.08 * (ctx.u.stats.bonusArmor + ctx.u.stats.bonusMr), label: 'Shield Bash' }] : []) },
+  SecondWind: { desc: 'Regen after taking champion damage', onTaken: (ctx) => { if (ctx.u.st.swT != null) return; ctx.u.st.swT = ctx.t; ctx.sim.later(2, () => ctx.sim.healUnit(ctx.u, 3 + 0.04 * (ctx.u.maxHp - ctx.u.hp), 'Second Wind')) } },
+  Unflinching: { desc: 'Tenacity and slow resist', noCombat: true },
+  Guardian: { desc: 'Shield when taking damage', onTaken: (ctx) => { if (ctx.t < (ctx.u.st.guardT ?? -1)) return; ctx.u.st.guardT = ctx.t + 70; ctx.sim.addShield(ctx.u, byLevel(45, 120, L(ctx.u)) + 0.15 * ctx.u.stats.ap + 0.09 * ctx.u.stats.bonusHp, 2, 'Guardian') } },
+  PhaseRush: { desc: '3 hits: burst of move speed', onHit: (ctx) => { ctx.addMark('phase', 1, 4); if (ctx.mark('phase') >= 3 && ctx.t >= (ctx.u.st.phaseT ?? -1)) { ctx.clearMark('phase'); ctx.u.st.phaseT = ctx.t + 12; ctx.giveBuff('msPct', 0.4, 3, 'Phase Rush') } return [] } },
+  GlacialAugment: { desc: 'Slows (no damage effect)', noCombat: true },
+  UnsealedSpellbook: { desc: 'Swap summoner spells', noCombat: true },
+  HextechFlashtraption: { desc: 'Hexflash', noCombat: true },
+  MagicalFootwear: { desc: 'Free boots', noCombat: true },
+  CashBack: { desc: 'Gold back', noCombat: true },
+  TripleTonic: { desc: 'Free elixirs', noCombat: true },
+  TimeWarpTonic: { desc: 'Potions work instantly', noCombat: true },
+  BiscuitDelivery: { desc: 'Biscuits', noCombat: true },
+  CosmicInsight: { desc: 'Summoner and item haste', noCombat: true },
+  ApproachVelocity: { desc: 'Move speed toward slowed enemies', noCombat: true },
+  JackOfAllTrades: { desc: 'Bonus stats for stat variety (assumes 10 stats)', stats: () => ({ ah: 10, ad: 9 }) },
+  SixthSense: { desc: 'Vision', noCombat: true },
+  GrislyMementos: { desc: 'Ability haste from takedowns (assumes ~half stacks)', stats: () => ({ ah: 10 }) },
+  DeepWard: { desc: 'Wards', noCombat: true },
+  TreasureHunter: { desc: 'Gold', noCombat: true },
+  RelentlessHunter: { desc: 'Out-of-combat move speed', noCombat: true },
+  UltimateHunter: { desc: 'Ultimate haste (assumes 5 stacks: +31)', ultHaste: () => 31 },
+  DeathfireTouch: { desc: 'Abilities burn (approx.)', onSpellHit: (ctx) => { ctx.sim.addDot(ctx.u, ctx.tgt, adaptive(ctx.u), byLevel(20, 60, L(ctx.u)) + 0.1 * ctx.bonusAd + 0.05 * ctx.ap, 3, 'Deathfire Touch', 'deathfire'); return [] } },
+  StormraidersSurge: { desc: 'Big burst of damage → move speed', noCombat: true },
 }
 
 export const runeEffect = (key) => RUNE_EFFECTS[key] || null

@@ -22,7 +22,7 @@ export default function Overlay() {
     const foe = state.enemies[state.focus] || state.enemies.find(Boolean)
     const versus = state.target === 'champ' ? (foe ? [buildUnit(foe, data, 'B0')] : null) : buildDummies(state.target, lang)
     if (!versus) return null
-    return { me, versus, run: dummyRun(me, versus, { positioning: state.opts.positioning, record: false }) }
+    return { me, versus, run: dummyRun(me, versus, { positioning: state.opts.positioning, resource: state.opts.resource, record: false }) }
   }, [state, data, lang])
 
   const green = route.params.get('bg') === 'green'

@@ -28,8 +28,8 @@ export default function Compare() {
     return builds.map((items) => {
       const cfg = { ...me, items }
       const u = buildUnit(cfg, data, 'A0')
-      const r = dummyRun(u, versus, { positioning: opts.positioning, record: false })
-      const bp = breakpoints(cfg, data, buildUnit, versus[0], { positioning: opts.positioning })
+      const r = dummyRun(u, versus, { positioning: opts.positioning, resource: opts.resource, record: false })
+      const bp = breakpoints(cfg, data, buildUnit, versus[0], { positioning: opts.positioning, resource: opts.resource })
       return { items, gold: u.gold, ...r, perGold: u.gold ? (r.dps / u.gold) * 1000 : 0, bp }
     })
   }, [me, builds, versus, data, opts])
@@ -82,7 +82,7 @@ export default function Compare() {
                 <button className="btn small" onClick={() => setBuild(i, [...me.items])}>{t('copy_current')}</button>
                 {items.length > 1 && versus && (
                   <button className="btn small" title={t('best_order_hint')}
-                    onClick={() => setBuild(i, bestOrder({ ...me, items }, data, buildUnit, versus, { positioning: opts.positioning }))}>⚡ {t('best_order')}</button>
+                    onClick={() => setBuild(i, bestOrder({ ...me, items }, data, buildUnit, versus, { positioning: opts.positioning, resource: opts.resource }))}>⚡ {t('best_order')}</button>
                 )}
                 <span className="grow" />
                 <span className="num small" style={{ color: 'var(--yellow)' }}>{r?.gold ?? 0} {t('gold')}</span>
