@@ -69,9 +69,9 @@ export const MARKSMEN = {
     asRatio: 0.658,
     notes: 'Q needs 4 Focus stacks from attacks, then turns attacks into a flurry.',
     spells: {
-      Q: S(0, 600, [buff('asPct', [25, 32.5, 40, 47.5, 55], 6), buff('attackMult', [0.05, 0.1, 0.15, 0.2, 0.25], 6)], { cast: 0, ready: (ctx) => ctx.u.st.focus >= 4 }),
-      W: S([14, 11.5, 9, 6.5, 4], 1200, [dmg(P, [20, 35, 50, 65, 80], { ad: 1 })], { aoe: true }),
-      R: S([100, 80, 60], 25000, [dmg(M, [200, 400, 600], { ap: 1.2 }), cc(2)]),
+      Q: S(0, 600, [buff('asPct', [20, 30, 40, 50, 60], 6), buff('attackMult', [0.1, 0.175, 0.25, 0.325, 0.4], 6)], { cast: 0, ready: (ctx) => ctx.u.st.focus >= 4 }),
+      W: S([14, 11.5, 9, 6.5, 4], 1200, [dmg(P, [20, 35, 50, 65, 80], { bad: 1.1 })], { aoe: true }),
+      R: S([100, 80, 60], 25000, [dmg(M, [250, 450, 650], { ap: 1.2 }), cc(2)]),
     },
     combo: ['R', 'Q', 'W'],
     hooks: {
@@ -133,7 +133,7 @@ export const MARKSMEN = {
     asRatio: 0.658,
     notes: 'W: every 3rd hit deals % max HP true damage. E wall stun not simulated.',
     spells: {
-      Q: S([4, 3.5, 3, 2.5, 2], 300, [dash(300, 'side'), empower(1, dmg(P, 0, { ad: [0.75, 0.8, 0.85, 0.9, 0.95] })), reset()], { cast: 0.15 }),
+      Q: S([4, 3.5, 3, 2.5, 2], 300, [dash(300, 'side'), empower(1, dmg(P, 0, { ad: [0.75, 0.85, 0.95, 1.05, 1.15], ap: 0.5 })), reset()], { cast: 0.15 }),
       E: S([20, 18, 16, 14, 12], 550, [dmg(P, [50, 85, 120, 155, 190], { bad: 0.5 })]),
       R: S([100, 85, 70], 0, [buff('ad', [25, 40, 55], [8, 10, 12])], { cast: 0, when: 'start' }),
     },
@@ -144,8 +144,8 @@ export const MARKSMEN = {
         ctx.addMark('bolts', 1, 3.5)
         if (ctx.mark('bolts') < 3) return []
         ctx.clearMark('bolts')
-        const pct = atRank([0.06, 0.075, 0.09, 0.105, 0.12], ctx.rank.W)
-        const min = atRank([50, 65, 80, 95, 110], ctx.rank.W)
+        const pct = atRank([0.04, 0.055, 0.07, 0.085, 0.1], ctx.rank.W)
+        const min = atRank([40, 55, 70, 85, 100], ctx.rank.W)
         return [{ dt: T, raw: Math.max(min, pct * ctx.tgt.maxHp), label: 'Silver Bolts' }]
       },
     },
@@ -211,7 +211,7 @@ export const MARKSMEN = {
     asRatio: 0.638,
     notes: 'After each spell the next attack fires twice. Passive hits lower E by 2s.',
     spells: {
-      Q: S([9, 8, 7, 6, 5], 500, [dmg(P, [85, 115, 145, 175, 205], { bad: [0.6, 0.75, 0.9, 1.05, 1.2] })], { cast: 0.4 }),
+      Q: S([9, 8, 7, 6, 5], 500, [dmg(P, [90, 130, 170, 210, 250], { bad: 1 })], { cast: 0.4 }),
       W: S(14, 900, [dmg(M, [75, 110, 145, 180, 215], { ap: 0.9 })]),
       E: S([19, 17.75, 16.5, 15.25, 14], 425, [dash(425, 'side'), reset()], { cast: 0.1 }),
       R: S([90, 75, 60], 1200, [dot(P, [225, 450, 675], { ad: 3.75, ap: 2.25 }, 3)], { cast: 3 }),
@@ -356,7 +356,7 @@ export const MARKSMEN = {
     asRatio: 0.658,
     notes: 'W on-hit applies Blight (max 3). Spells pop Blight for % max HP.',
     spells: {
-      Q: S([16, 15, 14, 13, 12], 1595, [dmg(P, [90, 160, 230, 300, 370], { bad: [1.3, 1.4, 1.5, 1.6, 1.7] })], { cast: 1.25, ready: (ctx) => ctx.mark('blight') >= 3 || !ctx.rank.W }),
+      Q: S([16, 15, 14, 13, 12], 1595, [dmg(P, [80, 150, 220, 290, 360], { bad: 1.2 })], { cast: 1.25, ready: (ctx) => ctx.mark('blight') >= 3 || !ctx.rank.W }),
       E: S([18, 16, 14, 12, 10], 925, [dmg(P, [60, 100, 140, 180, 220], { bad: 0.9 })], { aoe: true, ready: (ctx) => ctx.mark('blight') >= 3 || !ctx.rank.W }),
       R: S([100, 80, 60], 1370, [dmg(M, [150, 250, 350], { ap: 1 }), cc(2)]),
     },
@@ -444,8 +444,8 @@ export const MARKSMEN = {
     notes: 'Set Dragon Practice stacks in Stacks. 125+ adds an explosion, 225+ executes under 6.5%.',
     stacks: [{ key: 'practice', label: { en: 'Dragon Practice', fr: 'Entraînement draconique' }, max: 400, def: 125 }],
     spells: {
-      Q: S([5.5, 5, 4.5, 4, 3.5], 550, [dmg(P, [15, 35, 55, 75, 95], { ad: 1, ap: 0.15 }, { extra: (ctx) => 0.4 * (ctx.u.stacks.practice || 0) })]),
-      W: S([12, 11, 10, 9, 8], 1050, [dmg(P, [50, 80, 110, 140, 170], { bad: 0.25, ap: 0.25 })], { aoe: true }),
+      Q: S([5.5, 5, 4.5, 4, 3.5], 550, [dmg(P, [60, 75, 90, 105, 120], { bad: 1.3 }, { extra: (ctx) => 0.4 * (ctx.u.stacks.practice || 0) })]),
+      W: S([12, 11, 10, 9, 8], 1050, [dmg(P, [25, 50, 75, 100, 125], { bad: 0.5, ap: 0.8 })], { aoe: true }),
       E: S([24, 22, 20, 18, 16], 0, [buff('msPct', 1, 1.25)], { cast: 0 }),
       R: S([140, 110, 80], 3500, [dmg(P, [200, 300, 400], { bad: 1.1, ap: 1 })], { aoe: true }),
     },
