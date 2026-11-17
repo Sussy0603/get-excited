@@ -28,14 +28,17 @@ async function getJSON(url) {
 const cacheGet = (k) => { try { return JSON.parse(localStorage.getItem(k)) } catch { return null } }
 const cacheSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)) } catch { /* storage full or blocked: fine */ } }
 
-export async function loadData(lang = 'en') {
+// patch = null → latest. Otherwise a version like "15.20.1".
+export async function loadData(lang = 'en', patch = null) {
   const loc = LOCALES[lang] || 'en_US'
   try {
-    const versions = await getJSON(`${ROOT}/api/versions.json`)
-    const v = versions[0]
+    const all = await getJSON(`${ROOT}/api/versions.json`)
+    // Only real patches ("15.20.1"), newest first, last ~40.
+    const versions = all.filter((x) => /^\d+\.\d+\.\d+$/.test(x)).slice(0, 40)
+    const v = patch && versions.includes(patch) ? patch : versions[0]
     const key = `ge:dd:${v}:${loc}`
     const cached = cacheGet(key)
-    if (cached) return hydrate({ ...cached, offline: false })
+    if (cached) return hydrate({ ...cached, versions, latest: versions[0], offline: false })
 
     const base = `${CDN}/${v}/data`
     const [champs, itemsEn, itemsLoc, runes, summs] = await Promise.all([
@@ -48,10 +51,10 @@ export async function loadData(lang = 'en') {
     const data = normalize({ version: v, champs, itemsEn, itemsLoc: itemsLoc || itemsEn, runes, summs })
     // Item effects are functions → can't be cached. Store without them, re-attach on load.
     cacheSet(key, stripFx(data))
-    return data
+    return { ...data, versions, latest: versions[0] }
   } catch (err) {
     console.warn('[Get Excited] Riot data unavailable, using offline sample.', err)
-    return { ...normalize(FIXTURE), offline: true }
+    return { ...normalize(FIXTURE), versions: [], latest: null, offline: true }
   }
 }
 

@@ -6,7 +6,7 @@ import { ItemPicker } from '../components/Pickers.jsx'
 import { LineChart } from '../components/Charts.jsx'
 import ShareBar from '../components/ShareBar.jsx'
 import { buildUnit } from '../engine/build.js'
-import { dummyRun, breakpoints } from '../engine/metrics.js'
+import { dummyRun, breakpoints, bestOrder } from '../engine/metrics.js'
 import { useFightSetup, fmt } from './Calculator.jsx'
 import { TARGETS } from '../data/targets.js'
 import { L } from '../i18n.js'
@@ -79,6 +79,10 @@ export default function Compare() {
               </div>
               <div className="row" style={{ marginTop: 8 }}>
                 <button className="btn small" onClick={() => setBuild(i, [...me.items])}>{t('copy_current')}</button>
+                {items.length > 1 && versus && (
+                  <button className="btn small" title={t('best_order_hint')}
+                    onClick={() => setBuild(i, bestOrder({ ...me, items }, data, buildUnit, versus, { positioning: opts.positioning }))}>⚡ {t('best_order')}</button>
+                )}
                 <span className="grow" />
                 <span className="num small" style={{ color: 'var(--yellow)' }}>{r?.gold ?? 0} {t('gold')}</span>
               </div>

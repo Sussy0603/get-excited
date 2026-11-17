@@ -360,6 +360,8 @@ class Sim {
     }
     tgt.hp -= rem
     if (src.firstHitT == null) src.firstHitT = t
+    tgt.tstate[src.key] = tgt.tstate[src.key] || {}
+    tgt.tstate[src.key].lastHitT = t
     src.totals[type] += dmg
     if (t - src.firstHitT <= 3 + 1e-9) src.totals.burst += dmg
     src.totals.dealtTo[tgt.key] = (src.totals.dealtTo[tgt.key] || 0) + dmg
@@ -412,6 +414,13 @@ class Sim {
     u.deathT = this.t
     u.killedBy = src?.key
     this.push({ kind: 'death', src: src?.key, tgt: u.key, label: 'Kill' })
+    // Takedown passives: anyone who hit this unit in the last 3s.
+    if (u.dummy) return
+    for (const x of this.units) {
+      if (x.dead || x.side === u.side || !x.def?.hooks?.onTakedown) continue
+      const last = u.tstate[x.key]?.lastHitT
+      if (last != null && this.t - last <= 3) x.def.hooks.onTakedown(this.ctx(x, u))
+    }
   }
 
   checkLowHp(u) {

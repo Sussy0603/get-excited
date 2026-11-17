@@ -2,7 +2,7 @@
 // Calculator — the main screen.
 // Left: your build. Right: target, numbers, and the fight replay.
 // ─────────────────────────────────────────────────────────────
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useStore, sampleFight } from '../state/store.jsx'
 import UnitEditor from '../components/UnitEditor.jsx'
 import { ChampIcon } from '../components/Icon.jsx'
@@ -10,6 +10,7 @@ import { HpChart, Donut } from '../components/Charts.jsx'
 import FightLog from '../components/FightLog.jsx'
 import Arena from '../components/Arena.jsx'
 import ShareBar from '../components/ShareBar.jsx'
+import ImportMatch from '../components/ImportMatch.jsx'
 import { buildUnit, buildDummies } from '../engine/build.js'
 import { dummyRun, fight, effectiveHp, enemyMix } from '../engine/metrics.js'
 import { TARGETS, TARGET_IDS } from '../data/targets.js'
@@ -34,6 +35,7 @@ export function useFightSetup() {
 export default function Calculator() {
   const { state, update, data, t, lang, setSaved, go } = useStore()
   const exportRef = useRef(null)
+  const [importing, setImporting] = useState(false)
   const { meU, foes, dummies, focusIdx, focusFoe, opts, target } = useFightSetup()
 
   const results = useMemo(() => {
@@ -61,8 +63,12 @@ export default function Calculator() {
         <div className="panel empty">
           <div className="big">{t('empty_title')}</div>
           <p className="muted">{t('empty_body')}</p>
-          <button className="btn primary" onClick={loadSample}>🎲 {t('load_sample')}</button>
+          <div className="row" style={{ justifyContent: 'center' }}>
+            <button className="btn primary" onClick={loadSample}>🎲 {t('load_sample')}</button>
+            <button className="btn" onClick={() => setImporting(true)}>📥 {t('import')}</button>
+          </div>
         </div>
+        {importing && <ImportMatch onClose={() => setImporting(false)} />}
       </div>
     )
   }
@@ -100,8 +106,12 @@ export default function Calculator() {
               </label>
             </div>
           </div>
-          <div className="section"><ShareBar targetRef={exportRef} onSave={save} /></div>
+          <div className="section row" style={{ justifyContent: 'space-between' }}>
+            <ShareBar targetRef={exportRef} onSave={save} />
+            <button className="btn" onClick={() => setImporting(true)}>📥 {t('import')}</button>
+          </div>
         </div>
+        {importing && <ImportMatch onClose={() => setImporting(false)} />}
 
         {target === 'champ' && !focusFoe && (
           <div className="panel empty">

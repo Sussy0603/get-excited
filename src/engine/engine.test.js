@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest'
 import { growth, ranksAt, computeStats } from './stats.js'
 import { resistMultiplier, effectiveResist, mitigate, critAverage, ehp } from './damage.js'
 import { buildUnit, buildDummies, newConfig } from './build.js'
-import { dummyRun, fight, effectiveHp } from './metrics.js'
+import { dummyRun, fight, effectiveHp, bestOrder } from './metrics.js'
 import { normalize, parseItemStats } from '../data/ddragon.js'
 import { FIXTURE } from '../data/fixture.js'
 import { CHAMP_DEFS } from '../data/champs/index.js'
@@ -98,6 +98,23 @@ describe('simulator', () => {
     const plain = effectiveHp(buildUnit(cfg('Garen'), data, 'B0'))
     const tanky = effectiveHp(garen())
     expect(tanky.physical).toBeGreaterThan(plain.physical)
+  })
+})
+
+describe('extras', () => {
+  it('best buy order keeps the same items', () => {
+    const c = cfg('Jinx', { items: ['3075', '3031', '6672'] })
+    const foe = buildUnit(cfg('Garen'), data, 'B0')
+    const o = bestOrder(c, data, buildUnit, [foe])
+    expect([...o].sort()).toEqual([...c.items].sort())
+    expect(o[0]).not.toBe('3075') // a tank item is not Jinx's best first buy
+  })
+  it('Jinx gets excited on a takedown in a team fight', () => {
+    const jinx = buildUnit(cfg('Jinx', { level: 18, items: ['3031', '6672', '3036'] }), data, 'A0')
+    const lux = buildUnit(cfg('Lux', { level: 6 }), data, 'B0')
+    const lux2 = buildUnit(cfg('Lux', { level: 6 }), data, 'B1')
+    const r = fight([jinx], [lux, lux2], { twoWay: false })
+    expect(r.log.some((e) => e.label === 'Get Excited!')).toBe(true)
   })
 })
 

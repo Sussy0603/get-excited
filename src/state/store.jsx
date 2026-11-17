@@ -22,13 +22,14 @@ export const initialState = () => ({
   opts: { twoWay: false, positioning: false },
   allies: [null, null, null, null, null],
   compare: [[], []],
+  patch: null, // null = always latest
 })
 
 const read = (k) => { try { return JSON.parse(localStorage.getItem(k)) } catch { return null } }
 const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)) } catch { /* private mode / full: ignore */ } }
 
 // ── Share links: state → short text → state ────────────────
-const SHARED = ['me', 'enemies', 'focus', 'target', 'opts', 'allies', 'compare']
+const SHARED = ['me', 'enemies', 'focus', 'target', 'opts', 'allies', 'compare', 'patch']
 export function encodeShare(state) {
   const pick = Object.fromEntries(SHARED.map((k) => [k, state[k]]))
   const json = JSON.stringify(pick)
@@ -66,9 +67,9 @@ export function StoreProvider({ children }) {
   useEffect(() => {
     let alive = true
     setData((d) => (d ? { ...d, reloading: true } : d))
-    loadData(state.lang).then((d) => { if (alive) setData(d) })
+    loadData(state.lang, state.patch).then((d) => { if (alive) setData(d) })
     return () => { alive = false }
-  }, [state.lang])
+  }, [state.lang, state.patch])
 
   useEffect(() => write(KEY, state), [state])
   useEffect(() => write(SAVED_KEY, saved), [saved])

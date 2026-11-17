@@ -60,6 +60,16 @@ export default function App() {
             ))}
           </nav>
           <span className="spacer" />
+          {data.versions?.length > 0 && (
+            <label className="row small muted" style={{ gap: 6 }}>
+              {t('patch')}
+              <select value={state.patch || ''} onChange={(e) => update((s) => { s.patch = e.target.value || null })} style={{ width: 'auto', padding: '6px 10px' }} aria-label={t('patch')}>
+                <option value="">{t('latest')} ({data.latest})</option>
+                {data.versions.slice(1).map((v) => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </label>
+          )}
+          {data.reloading && <span className="chip cyan">…</span>}
           <div className="seg" role="group" aria-label="Language">
             <button aria-pressed={state.lang === 'en'} onClick={() => update((s) => { s.lang = 'en' })}>EN</button>
             <button aria-pressed={state.lang === 'fr'} onClick={() => update((s) => { s.lang = 'fr' })}>FR</button>
@@ -80,6 +90,7 @@ export default function App() {
         </header>
 
         {data.offline && <div className="notice" role="status">⚠ {t('offline')}</div>}
+        {state.patch && data.version !== data.latest && <div className="notice" role="status">⏪ {t('patch')} {data.version} — {t('old_patch')}</div>}
 
         <main><Screen /></main>
 

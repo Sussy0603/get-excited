@@ -71,3 +71,26 @@ export function breakpoints(cfg, data, build, foe, opts = {}) {
   }
   return out
 }
+
+/**
+ * Best buy order (greedy): at each step, buy the item that adds the most
+ * DPS per gold spent. 6 items = only 21 quick sims, so it's instant.
+ */
+export function bestOrder(cfg, data, build, foes, opts = {}) {
+  const left = [...cfg.items]
+  const order = []
+  let prev = dummyRun(build({ ...cfg, items: [] }, data, 'A0'), foes, { ...opts, record: false }).dps
+  while (left.length) {
+    let best = null
+    for (const id of left) {
+      const dps = dummyRun(build({ ...cfg, items: [...order, id] }, data, 'A0'), foes, { ...opts, record: false }).dps
+      const gold = data.items[id]?.gold || 1
+      const score = (dps - prev) / gold
+      if (!best || score > best.score) best = { id, dps, score }
+    }
+    order.push(best.id)
+    left.splice(left.indexOf(best.id), 1)
+    prev = best.dps
+  }
+  return order
+}
