@@ -45,7 +45,7 @@ export const MARKSMEN = {
     asRatio: 0.568,
     notes: 'Headshot every 6th attack; E guarantees the next one. Traps (W) not simulated.',
     spells: {
-      Q: S([10, 9, 8, 7, 6], 1300, [dmg(P, [50, 90, 130, 170, 210], { ad: [1.25, 1.45, 1.65, 1.85, 2.05] })], { cast: 0.625 }),
+      Q: S([10, 9, 8, 7, 6], 1300, [dmg(P, [50, 95, 140, 185, 230], { ad: [1.25, 1.45, 1.65, 1.85, 2.05] })], { cast: 0.625 }),
       E: S([16, 14, 12, 10, 8], 750, [dmg(M, [80, 130, 180, 230, 280], { ap: 0.8 }), dash(390, 'away')], { cast: 0.15 }),
       R: S([90, 75, 60], 3500, [dmg(P, [300, 525, 750], { bad: 1.7 })], { cast: 1, when: 'execute' }),
     },
@@ -58,7 +58,7 @@ export const MARKSMEN = {
         if (ctx.u.st.hs < 6) return []
         ctx.u.st.hs = 0
         const L = lvl(ctx)
-        const mult = L >= 13 ? 1.2 : L >= 7 ? 0.9 : 0.6
+        const mult = L >= 13 ? 0.8 : L >= 7 ? 0.7 : 0.6
         return [{ dt: P, raw: ctx.ad * mult * (1 + ctx.u.stats.crit), label: 'Headshot' }]
       },
     },
@@ -86,10 +86,10 @@ export const MARKSMEN = {
     asRatio: 0.625,
     notes: 'Q applies on-hit and lowers all cooldowns by 1.5s. Passive: +10% AS per spell hit (max 5).',
     spells: {
-      Q: S([5.5, 5.25, 5, 4.75, 4.5], 1150, [dmg(P, [20, 45, 70, 95, 120], { ad: 1.3, ap: 0.15 }, { onHit: true })]),
-      W: S(12, 1150, [dmg(M, [80, 135, 190, 245, 300], { bad: 0.6, ap: [0.7, 0.75, 0.8, 0.85, 0.9] })]),
-      E: S([26, 23, 20, 17, 14], 475, [dash(475, 'away'), dmg(M, [80, 130, 180, 230, 280], { bad: 0.5, ap: 0.75 })]),
-      R: S(120, 25000, [dmg(M, [350, 500, 650], { bad: 1, ap: 0.9 })], { cast: 1, when: 'execute', aoe: true }),
+      Q: S([5.5, 5.25, 5, 4.75, 4.5], 1150, [dmg(P, [20, 45, 70, 95, 120], { ad: 1.3, ap: 0.4 }, { onHit: true })]),
+      W: S(12, 1150, [dmg(M, [80, 135, 190, 245, 300], { bad: 1, ap: 0.9 })]),
+      E: S([26, 23, 20, 17, 14], 475, [dash(475, 'away'), dmg(M, [80, 130, 180, 230, 280], { bad: 0.6, ap: 0.75 })]),
+      R: S(120, 25000, [dmg(M, [350, 550, 750], { bad: 1, ap: 1.1 })], { cast: 1, when: 'execute', aoe: true }),
     },
     combo: ['W', 'Q', 'R', 'E'],
     hooks: {
@@ -118,10 +118,10 @@ export const MARKSMEN = {
       onHit: (ctx) => {
         const L = lvl(ctx)
         const stacks = ctx.mark('plasma')
-        const out = [{ dt: M, raw: byLevel(5, 23, L) + stacks * byLevel(1, 12, L) + 0.15 * ctx.ap, label: 'Caustic Wounds' }]
+        const out = [{ dt: M, raw: byLevel(4, 30, L) + 0.12 * ctx.ap + stacks * (byLevel(1, 8, L) + 0.03 * ctx.ap), label: 'Caustic Wounds' }]
         if (stacks >= 4) {
           ctx.clearMark('plasma')
-          out.push({ dt: M, raw: (0.15 + (0.06 * ctx.ap) / 100) * (ctx.tgt.maxHp - ctx.tgt.hp), label: 'Plasma burst' })
+          out.push({ dt: M, raw: (0.15 + (0.025 * ctx.ap) / 100) * (ctx.tgt.maxHp - ctx.tgt.hp), label: 'Plasma burst' })
         } else ctx.addMark('plasma', 1, 4)
         return out
       },
@@ -155,11 +155,11 @@ export const MARKSMEN = {
   Jhin: {
     asRatio: 0.625,
     fixedAS: 0.75,
-    notes: '4 shots then a 2.5s reload. Bonus AS and crit turn into AD. 4th shot always crits.',
+    notes: '4 shots then a 2.5s reload. Bonus AS and crit turn into AD. 4th shot always crits. R uses the minimum damage (no missing-HP boost) — low estimate.',
     spells: {
       Q: S([7, 6.5, 6, 5.5, 5], 550, [dmg(P, [45, 70, 95, 120, 145], { ad: [0.35, 0.425, 0.5, 0.575, 0.65], ap: 0.6 })]),
-      W: S(12, 2520, [dmg(P, [60, 95, 130, 165, 200], { ad: 0.5 }), cc(1.5)], { cast: 0.75 }),
-      R: S([120, 105, 90], 3500, [dmg(P, [200, 500, 800], { ad: 1 })], { cast: 2.5, when: 'execute' }),
+      W: S(12, 2520, [dmg(P, [70, 105, 140, 175, 210], { ad: 0.5 }), cc(1.5)], { cast: 0.75 }),
+      R: S([120, 105, 90], 3500, [dmg(P, [320, 640, 960], { ad: 1.25 })], { cast: 2.5, when: 'execute' }),
     },
     combo: ['W', 'Q', 'R'],
     hooks: {
@@ -397,7 +397,7 @@ export const MARKSMEN = {
       Q: S(8, 1200, [dmg(M, [90, 140, 190, 240, 290], { ap: 0.7 })]),
       W: S(17, 0, [buff('range', [130, 150, 170, 190, 210], 8), buff('kogW', [0.0375, 0.045, 0.0525, 0.06, 0.0675], 8)], { cast: 0, when: 'start' }),
       E: S(12, 1360, [dmg(M, [75, 120, 165, 210, 255], { ap: 0.7 })], { aoe: true }),
-      R: S([4, 3.5, 3], [1300, 1550, 1800], [dmg(M, [100, 140, 180], { bad: 0.65, ap: 0.35 }, { missingMult: 1 })], { aoe: true }),
+      R: S([4, 3.5, 3], [1300, 1550, 1800], [dmg(M, [100, 140, 180], { bad: 0.65, ap: 0.35 }, { missingMult: 1 })], { aoe: true, keepCd: true }),
     },
     combo: ['W', 'Q', 'E', 'R'],
     hooks: {
@@ -489,7 +489,7 @@ export const MARKSMEN = {
       Q: S([8, 7.5, 7, 6.5, 6], 825, [dmg(M, [70, 115, 160, 205, 250], { bad: 0.7, ap: 0.5 })], { aoe: true }),
       W: S([20, 19, 18, 17, 16], 600, [dash(600, 'to'), dot(M, [60, 90, 120, 150, 180], { ap: 0.4 }, 1)], { when: 'execute' }),
       E: S(16, 600, [dot(M, [60, 90, 120, 150, 180], { bad: 0.6 }, 4)], { cast: 0 }),
-      R: S([3, 2.5, 2], 1300, [dmg(M, [80, 115, 150], { ad: [0.15, 0.45, 0.75], ap: 0.12 })], { aoe: true }),
+      R: S([3, 2.5, 2], 1300, [dmg(M, [80, 115, 150], { ad: [0.15, 0.45, 0.75], ap: 0.12 })], { aoe: true, keepCd: true }),
     },
     combo: ['R', 'Q', 'E', 'W'],
   },
@@ -619,7 +619,7 @@ export const MARKSMEN = {
     spells: {
       Q: S(7, 680, [dmg(M, [80, 125, 170, 215, 260], { ap: 0.8 })]),
       W: S(17, 0, [buff('msPct', [0.2, 0.28, 0.36, 0.44, 0.52], 3)], { cast: 0 }),
-      R: S([30, 25, 20], 600, [dot(M, [200, 325, 450], { ap: 0.55 }, 4)], { aoe: true }),
+      R: S([30, 25, 20], 600, [dot(M, [200, 325, 450], { ap: 0.55 }, 4)], { aoe: true, keepCd: true }),
     },
     combo: ['Q', 'R'],
     hooks: {

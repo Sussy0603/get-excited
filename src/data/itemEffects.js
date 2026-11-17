@@ -34,17 +34,20 @@ const ranged = (ctx) => ctx.u.stats.range >= 300
 export const ITEM_EFFECTS = {
   // Infinity Edge: its crit damage is a normal stat now (read from Riot's data).
 
+  // ✔ checked: 150–200 melee / 120–160 ranged, +0–50% by target missing HP
   'kraken slayer': {
-    desc: 'Every 3rd attack: bonus physical damage (more vs low HP)',
+    desc: 'Every 3rd attack: bonus physical damage (up to +50% vs low HP)',
     onHit: everyN(3, 'kraken', (ctx) => {
       const miss = 1 - ctx.tgt.hp / ctx.tgt.maxHp
-      return [{ dt: P, raw: byLevel(140, 310, ctx.u.stats.level) * (1 + 0.75 * Math.min(1, miss / 0.7)), label: 'Kraken Slayer' }]
+      const base = ranged(ctx) ? byLevel(120, 160, ctx.u.stats.level) : byLevel(150, 200, ctx.u.stats.level)
+      return [{ dt: P, raw: base * (1 + 0.5 * miss), label: 'Kraken Slayer' }]
     }),
   },
 
   'blade of the ruined king': {
     desc: 'On-hit: % of target current HP',
-    onHit: (ctx) => [{ dt: P, raw: Math.max(15, (ranged(ctx) ? 0.06 : 0.09) * ctx.tgt.hp), label: 'Mist\'s Edge' }],
+    // ✔ checked: 9% melee / 6% ranged of current HP (patch 25.24+)
+    onHit: (ctx) => [{ dt: P, raw: (ranged(ctx) ? 0.06 : 0.09) * ctx.tgt.hp, label: 'Mist\'s Edge' }],
   },
 
   'the collector': { desc: 'Executes under 5% HP', execute: 0.05 },

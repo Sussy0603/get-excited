@@ -195,7 +195,11 @@ export async function loadChampDetail(version, lang, id) {
     const c = j.data[id]
     detailCache[k] = {
       passive: { name: c.passive.name, image: c.passive.image.full },
-      spells: Object.fromEntries(['Q', 'W', 'E', 'R'].map((key, i) => [key, { name: c.spells[i].name, image: c.spells[i].image.full }])),
+      spells: Object.fromEntries(['Q', 'W', 'E', 'R'].map((key, i) => {
+        const sp = c.spells[i]
+        const costType = /no cost|noCost/i.test(sp.costType || '') || (sp.cost || []).every((x) => !x) ? 'none' : /energy/i.test(sp.costType || c.partype || '') ? 'energy' : 'mana'
+        return [key, { name: sp.name, image: sp.image.full, cooldown: sp.cooldown, cost: sp.cost, range: sp.range, costType }]
+      })),
     }
   } catch {
     detailCache[k] = null

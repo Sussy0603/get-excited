@@ -23,7 +23,7 @@ export function dummyRun(me, foes, opts = {}) {
   const dmg = total(mine.totals)
   const burst = mine.totals.burst // damage in the first 3s after the first hit
   return {
-    ttk: ttk == null ? null : ttk - start,
+    ttk, // from the start of the fight (includes wind-ups and walking)
     dps: dmg / span,
     burst,
     split: { physical: mine.totals.physical, magic: mine.totals.magic, true: mine.totals.true },

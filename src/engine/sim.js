@@ -215,28 +215,9 @@ class Sim {
     this.push({ kind: 'cast', src: u.key, tgt: tgt.key, label: key })
     if (sp.effects.some((e) => e.t === 'dmg' || e.t === 'dot')) this.shots.push({ t, src: u.key, tgt: tgt.key, kind: 'spell' })
 
-    const ctx = this.ctx(u, tgt)
-    const area = sp.aoe ? this.aoeTargets(u, tgt) : [tgt]
-    const hit = new Set()
+    // 1) Instant parts: buffs, shields, heals, dashes, empowers, resets.
     for (const e of sp.effects) {
       switch (e.t) {
-        case 'dmg':
-          for (const x of e.aoe || sp.aoe ? area : [tgt]) {
-            let raw = this.raw(e, rank, u, x)
-            if (e.crit) raw *= critAverage(this.crit(u), u.stats.critDmg)
-            const dealt = this.deal(u, x, raw, e.dt, { ability: key, castId, label: key })
-            if (dealt > 0) hit.add(x)
-            if (e.onHit) this.onHitEffects(u, x, castId)
-          }
-          break
-        case 'dot':
-          for (const x of e.aoe || sp.aoe ? area : [tgt]) {
-            let raw = this.raw(e, rank, u, x)
-            if (e.crit) raw *= critAverage(this.crit(u), u.stats.critDmg)
-            this.addDot(u, x, e.dt, raw, atRank(e.dur, rank), key)
-            hit.add(x)
-          }
-          break
         case 'buff': this.giveBuff(u, e.stat, atRank(e.val, rank), atRank(e.dur, rank), key); break
         case 'shield': {
           const who = sp.ally || sp.allyOnly ? this.lowestAlly(u, sp.allyOnly) || u : u
@@ -248,26 +229,56 @@ class Sim {
           this.healUnit(who, this.raw(e, rank, u, tgt) + (e.miss || 0) * (who.maxHp - who.hp), who === u ? key : `${key} → ${who.name}`)
           break
         }
-        case 'cc': for (const x of area) this.stun(x, atRank(e.dur, rank), u); break
         case 'dash': this.doDash(u, tgt, e.dist, e.dir); break
         case 'empower': u.empower.push({ n: e.n, effect: e.effect, rank, key }); break
         case 'reset': u.nextAttack = t; break
         case 'invuln': u.invulnUntil = t + atRank(e.dur, rank); break
       }
     }
-    u.def?.hooks?.onSpell?.(ctx, key)
-    if (key === 'R') for (const f of u.itemFx) f.afterUlt?.(ctx)
-    for (const f of u.itemFx) f.onCast?.(ctx, key)
 
-    for (const x of hit) {
-      const c = this.ctx(u, x)
-      const extra = [
-        ...(u.def?.hooks?.afterSpellHit?.(c, key) || []),
-        ...u.runes.flatMap((r) => r.onSpellHit?.(c) || []),
-      ]
-      for (const f of u.itemFx) f.onSpellHit?.(c)
-      for (const l of extra) this.deal(u, x, l.raw, l.dt, { label: l.label, castId, rune: true })
+    // 2) Damage + crowd control land after the cast time (channels: after 0.25s, then tick).
+    const hasDot = sp.effects.some((e) => e.t === 'dot')
+    const delay = sp.hitDelay ?? (hasDot ? Math.min(0.25, sp.cast ?? 0.25) : Math.min(1, sp.cast ?? 0.25))
+    const land = () => {
+      if (u.dead) return
+      const ctx = this.ctx(u, tgt)
+      const area = sp.aoe ? this.aoeTargets(u, tgt) : [tgt]
+      const hit = new Set()
+      for (const e of sp.effects) {
+        if (e.t === 'dmg') {
+          for (const x of e.aoe || sp.aoe ? area : [tgt]) {
+            let raw = this.raw(e, rank, u, x)
+            if (e.crit) raw *= critAverage(this.crit(u), u.stats.critDmg)
+            const dealt = this.deal(u, x, raw, e.dt, { ability: key, castId, label: key })
+            if (dealt > 0) hit.add(x)
+            if (e.onHit) this.onHitEffects(u, x, castId)
+          }
+        } else if (e.t === 'dot') {
+          for (const x of e.aoe || sp.aoe ? area : [tgt]) {
+            let raw = this.raw(e, rank, u, x)
+            if (e.crit) raw *= critAverage(this.crit(u), u.stats.critDmg)
+            this.addDot(u, x, e.dt, raw, atRank(e.dur, rank), key)
+            hit.add(x)
+          }
+        } else if (e.t === 'cc') {
+          for (const x of area) this.stun(x, atRank(e.dur, rank), u)
+        }
+      }
+      u.def?.hooks?.onSpell?.(ctx, key)
+      if (key === 'R') for (const f of u.itemFx) f.afterUlt?.(ctx)
+      for (const f of u.itemFx) f.onCast?.(ctx, key)
+      for (const x of hit) {
+        const c = this.ctx(u, x)
+        const extra = [
+          ...(u.def?.hooks?.afterSpellHit?.(c, key) || []),
+          ...u.runes.flatMap((r) => r.onSpellHit?.(c) || []),
+        ]
+        for (const f of u.itemFx) f.onSpellHit?.(c)
+        for (const l of extra) this.deal(u, x, l.raw, l.dt, { label: l.label, castId, rune: true })
+      }
     }
+    if (delay > 0) this.later(delay, land)
+    else land()
   }
 
   // Raw (pre-armor) damage of an effect against target x.
@@ -300,7 +311,16 @@ class Sim {
     const t = this.t
     const as = this.as(u, tgt)
     u.nextAttack = t + 1 / as
-    u.lockUntil = t + Math.min(0.25, 0.3 / as)
+    // Wind-up: the attack lands part-way through the attack timer.
+    // Ranged attacks then fly to the target (~2000 units/s).
+    const windup = (1 / as) * (u.def?.windup ?? ((u.stats.range || 0) >= 300 ? 0.18 : 0.25))
+    const travel = (u.stats.range || 0) >= 300 ? (this.opts.positioning ? this.dist(u, tgt) : u.stats.range) / 2000 : 0
+    u.lockUntil = t + windup
+    this.shots.push({ t: t + windup, src: u.key, tgt: tgt.key, kind: 'atk' })
+    this.later(windup + travel, () => { if (!u.dead && !tgt.dead) this.landAttack(u, tgt) })
+  }
+
+  landAttack(u, tgt) {
     const castId = ++this.castSeq
     const ctx = this.ctx(u, tgt)
     const hooks = u.def?.hooks
@@ -311,7 +331,6 @@ class Sim {
     const critTaken = tgt.itemFx.reduce((m, f) => m * (f.critTaken || 1), 1)
     raw *= critAverage(this.crit(u), 1 + (u.stats.critDmg - 1) * critTaken)
 
-    this.shots.push({ t, src: u.key, tgt: tgt.key, kind: 'atk' })
     if (u.def?.attackSplit) {
       const m = u.def.attackSplit.magic
       this.deal(u, tgt, raw * (1 - m), 'physical', { auto: true, castId, label: 'Attack' })
@@ -365,9 +384,11 @@ class Sim {
     const ctx = this.ctx(src, tgt)
     ctx.tags = tags
     let amp = 1
-    for (const r of src.runes) if (r.amp) amp *= r.amp(ctx)
-    for (const f of src.itemFx) if (f.amp) amp *= f.amp(ctx)
-    if (t < src.exhaustUntil) amp *= 0.65
+    if (!tags.noAmp) {
+      for (const r of src.runes) if (r.amp) amp *= r.amp(ctx)
+      for (const f of src.itemFx) if (f.amp) amp *= f.amp(ctx)
+      if (t < src.exhaustUntil && type !== 'true') amp *= 0.65 // Exhaust: -35%, not true damage
+    }
 
     let dmg = mitigate(raw * amp, type, this.penStats(src), this.defStats(tgt))
     dmg *= 1 - Math.min(0.8, this.buffSum(tgt, 'dmgRed'))
@@ -409,9 +430,11 @@ class Sim {
 
     // Healing from damage: life steal (attacks), omnivamp (all), Conqueror
     let h = 0
+    if (tags.noVamp) { /* Ignite / Smite: no life steal or omnivamp (patch 26.4) */ } else {
     if (tags.auto) h += dmg * this.lifesteal(src)
     h += dmg * ((src.stats.omnivamp || 0) + this.buffSum(src, 'omnivampBuff')) * (tags.dot ? 0.33 : 1)
     for (const r of src.runes) if (r.healOnDmg) h += dmg * r.healOnDmg(src)
+    }
     if (h > 0) this.healUnit(src, h, null, true)
 
     tgt.def?.hooks?.onTakeDamage?.(tgt, dmg)
@@ -481,7 +504,7 @@ class Sim {
       for (const s of u.summoners || []) {
         if (u.summUsed[s]) continue
         if (s === 'SummonerHeal') { u.summUsed[s] = true; this.healUnit(u, byLevel(80, 318, u.stats.level), 'Heal') }
-        if (s === 'SummonerBarrier') { u.summUsed[s] = true; this.addShield(u, byLevel(105, 411, u.stats.level), 2.5, 'Barrier') }
+        if (s === 'SummonerBarrier') { u.summUsed[s] = true; this.addShield(u, byLevel(100, 460, u.stats.level), 2.5, 'Barrier') } // ✔ 14.22+
       }
     }
   }
@@ -491,7 +514,8 @@ class Sim {
       if (u.summUsed[s]) continue
       if (s === 'SummonerDot' && !tgt.dummy && d <= 600 + RADIUS) {
         u.summUsed[s] = true
-        this.addDot(u, tgt, 'true', 70 + 20 * u.stats.level, 5, 'Ignite')
+        // Ignite: not amplified (25.15), no omnivamp (26.4)
+        this.addDot(u, tgt, 'true', 70 + 20 * u.stats.level, 5, 'Ignite', null, { noAmp: true, noVamp: true, rune: true })
         tgt.grievousUntil = Math.max(tgt.grievousUntil, this.t + 5)
       }
       if (s === 'SummonerExhaust' && !tgt.dummy && this.opts.twoWay && d <= 650 + RADIUS) {
@@ -501,7 +525,7 @@ class Sim {
       }
       if (s === 'SummonerSmite' && tgt.monster && tgt.hp <= (tgt.epic ? 1200 : 600)) {
         u.summUsed[s] = true
-        this.deal(u, tgt, tgt.epic ? 1200 : 600, 'true', { label: 'Smite', rune: true })
+        this.deal(u, tgt, tgt.epic ? 1200 : 600, 'true', { label: 'Smite', rune: true, noAmp: true, noVamp: true })
       }
       if (!this.opts.positioning) continue
       const range = this.range(u)
@@ -522,19 +546,19 @@ class Sim {
   }
 
   // ── Effects helpers (also used by champ/item/rune hooks) ─
-  addDot(src, tgt, type, total, dur, label, unique) {
+  addDot(src, tgt, type, total, dur, label, unique, flags = {}) {
     if (!tgt || tgt.dead || !(total > 0)) return
     if (unique) {
       const old = this.dots.find((d) => d.src === src && d.tgt === tgt && d.unique === unique)
       if (old) this.dots.splice(this.dots.indexOf(old), 1)
     }
     const ticks = Math.max(1, Math.round(dur / 0.5))
-    this.dots.push({ src, tgt, type, per: total / ticks, left: ticks, next: this.t + 0.5, label, unique })
+    this.dots.push({ src, tgt, type, per: total / ticks, left: ticks, next: this.t + 0.5, label, unique, flags })
   }
   tickDots() {
     for (const d of this.dots) {
       while (d.left > 0 && d.next <= this.t + 1e-9) {
-        this.deal(d.src, d.tgt, d.per, d.type, { dot: true, label: d.label })
+        this.deal(d.src, d.tgt, d.per, d.type, { dot: true, label: d.label, ...d.flags })
         d.left--
         d.next += 0.5
       }

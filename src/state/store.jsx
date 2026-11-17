@@ -5,7 +5,8 @@
 //  • Can be squeezed into a link (#/calc?s=…) to share a setup.
 // ─────────────────────────────────────────────────────────────
 import { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react'
-import { loadData } from '../data/ddragon.js'
+import { loadData, loadChampDetail } from '../data/ddragon.js'
+import { hasSpellData, setSpellData } from '../data/riotSpells.js'
 import { newConfig, defaultStacks } from '../engine/build.js'
 import { makeT } from '../i18n.js'
 
@@ -70,6 +71,21 @@ export function StoreProvider({ children }) {
     loadData(state.lang, state.patch).then((d) => { if (alive) setData(d) })
     return () => { alive = false }
   }, [state.lang, state.patch])
+
+  // Load Riot's spell data (cooldowns/costs/ranges) for every champ in use.
+  useEffect(() => {
+    if (!data?.version || data.version === 'offline') return
+    const ids = new Set([state.me, ...state.enemies, ...state.allies].filter(Boolean).map((c) => c.champ))
+    const fromHash = parseHash().route.match(/^builds\/(.+)$/)
+    if (fromHash) ids.add(fromHash[1])
+    const missing = [...ids].filter((id) => id && !hasSpellData(id))
+    if (!missing.length) return
+    let alive = true
+    Promise.all(missing.map((id) => loadChampDetail(data.version, 'en', id).then((d) => d && setSpellData(id, d.spells)))).then(() => {
+      if (alive) setData((d) => ({ ...d, spellRev: (d.spellRev || 0) + 1 })) // recompute everything
+    })
+    return () => { alive = false }
+  }, [state.me, state.enemies, state.allies, data?.version, route])
 
   useEffect(() => write(KEY, state), [state])
   useEffect(() => write(SAVED_KEY, saved), [saved])

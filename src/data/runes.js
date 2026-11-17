@@ -23,21 +23,33 @@ const adaptiveRaw = (u, base) => base + 0.1 * u.stats.bonusAd + 0.05 * u.stats.a
 
 export const RUNE_EFFECTS = {
   // ── Keystones ─────────────────────────────────────────────
+  // ✔ checked vs LoL Wiki (since V14.21): 6% / 4.8% AS per stack, 6 stacks,
+  // bolt at max stacks: melee 9–30 / ranged 6–24, +1% / +0.66% per 1% bonus AS.
   LethalTempoTemp: {
-    desc: 'Attacks stack up to 6× attack speed',
-    onHit: (ctx) => { ctx.u.st.lt = Math.min(6, (ctx.u.st.lt || 0) + 1); return [] },
-    asBonus: (u) => (u.st.lt || 0) * byLevel(isRanged(u) ? 3 : 4, isRanged(u) ? 8 : 9, L(u)),
-  },
-  PressTheAttack: {
-    desc: '3 hits: burst + target takes 8% more damage',
+    desc: 'Attacks stack attack speed (6×); at max, attacks fire a bonus bolt',
     onHit: (ctx) => {
-      ctx.addMark('pta', 1, 4, 3)
-      if (ctx.mark('pta') !== 3 || ctx.tgtState().ptaDone) return []
-      ctx.tgtState().ptaDone = true
-      ctx.tgtState().exposedUntil = ctx.t + 5
-      return [{ dt: adaptive(ctx.u), raw: byLevel(40, 174, L(ctx.u)), label: 'Press the Attack' }]
+      const had = ctx.u.st.lt || 0
+      ctx.u.st.lt = Math.min(6, had + 1)
+      if (had < 6) return []
+      const ranged = isRanged(ctx.u)
+      const bonusAs = (ctx.u.stats.bonusAsPct || 0) + ctx.buff('asPct') + 6 * (ranged ? 4.8 : 6)
+      const raw = byLevel(ranged ? 6 : 9, ranged ? 24 : 30, L(ctx.u)) * (1 + (bonusAs * (ranged ? 0.66 : 1)) / 100)
+      return [{ dt: adaptive(ctx.u), raw, label: 'Lethal Tempo' }]
     },
-    amp: (ctx) => (ctx.t < (ctx.tgtState().exposedUntil ?? -1) ? 1.08 : 1),
+    asBonus: (u) => (u.st.lt || 0) * (isRanged(u) ? 4.8 : 6),
+  },
+  // ✔ checked (14.10+): 3 hits → 40–160 adaptive, then YOU deal +8% damage
+  // to champions (true damage included, Smite excluded) until out of combat.
+  PressTheAttack: {
+    desc: '3 hits: burst, then +8% damage to champions',
+    onHit: (ctx) => {
+      if (ctx.tgt.dummy) return []
+      ctx.addMark('pta', 1, 4, 3)
+      if (ctx.mark('pta') !== 3 || ctx.u.st.ptaOn) return []
+      ctx.u.st.ptaOn = ctx.t + 0.001 // the triggering proc itself isn't amplified
+      return [{ dt: adaptive(ctx.u), raw: byLevel(40, 160, L(ctx.u)), label: 'Press the Attack' }]
+    },
+    amp: (ctx) => (ctx.u.st.ptaOn && ctx.t > ctx.u.st.ptaOn && !ctx.tgt.dummy && ctx.tags.label !== 'Smite' ? 1.08 : 1),
   },
   Conqueror: {
     desc: 'Stacks AD; heals at max stacks',

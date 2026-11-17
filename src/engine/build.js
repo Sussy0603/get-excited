@@ -16,6 +16,7 @@
 // ─────────────────────────────────────────────────────────────
 import { computeStats, ranksAt } from './stats.js'
 import { CHAMP_DEFS, defaultCombo } from '../data/champs/index.js'
+import { withRiotSpells } from '../data/riotSpells.js'
 import { runeEffect } from '../data/runes.js'
 import { TARGETS } from '../data/targets.js'
 
@@ -47,7 +48,7 @@ export function baseCritFor(version) {
 export function buildUnit(cfg, data, key) {
   const champ = cfg && data.champions[cfg.champ]
   if (!champ) return null
-  const def = CHAMP_DEFS[champ.id] || null
+  const def = withRiotSpells(CHAMP_DEFS[champ.id] || null, champ.id)
   const items = (cfg.items || []).map((id) => data.items[id]).filter(Boolean)
   const stacks = { ...defaultStacks(champ.id), ...(cfg.stacks || {}) }
   const runeKeys = [cfg.runes?.keystone, ...(cfg.runes?.minors || [])].filter(Boolean)

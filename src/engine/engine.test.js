@@ -189,3 +189,39 @@ describe('best next item + starters', () => {
     expect(data.items['1055'].starter).toBe(true)
   })
 })
+
+describe('exact hand-math checks', () => {
+  // A plain champ: 100 AD, 1.0 attack speed, melee, no kit, no items.
+  const plain = (range = 125) => ({ id: 'Plain', key: 'Plain', name: 'Plain', title: '', tags: [], stats: {
+    hp: 1000, hpperlevel: 0, mp: 0, mpperlevel: 0, armor: 0, armorperlevel: 0, spellblock: 0, spellblockperlevel: 0,
+    attackdamage: 100, attackdamageperlevel: 0, attackspeed: 1, attackspeedperlevel: 0, attackrange: range, movespeed: 330 } })
+  const local = (range) => ({ ...data, champions: { ...data.champions, Plain: plain(range) } })
+  const target = (hp, armor) => ({ ...buildDummies('tower')[0], structure: false, stats: { hp, armor, mr: 0, ad: 0, ap: 0, range: 0, level: 1, ms: 0, asBase: 0, asRatio: 0, critDmg: 2 } })
+
+  it('melee: 10 hits of 100 kill 1000 HP; hit k lands at k + 0.25s wind-up → 9.25s', () => {
+    const me = buildUnit({ ...newConfig('Plain'), level: 1, shards: [] }, local(125), 'A0')
+    const r = dummyRun(me, [target(1000, 0)])
+    expect(r.ttk).toBeCloseTo(9.25, 2)
+  })
+  it('armor: 100 armor halves damage → 20 hits → 19.25s', () => {
+    const me = buildUnit({ ...newConfig('Plain'), level: 1, shards: [] }, local(125), 'A0')
+    expect(dummyRun(me, [target(1000, 100)]).ttk).toBeCloseTo(19.25, 2)
+  })
+  it('ranged: wind-up 18% + flight (500 / 2000 = 0.25s) → 9.43s', () => {
+    const me = buildUnit({ ...newConfig('Plain'), level: 1, shards: [] }, local(500), 'A0')
+    expect(dummyRun(me, [target(1000, 0)]).ttk).toBeCloseTo(9.45, 1)
+  })
+})
+
+describe('checked shared numbers', () => {
+  it('Lethal Tempo: ranged max +28.8% attack speed', () => {
+    const j = buildUnit(cfg('Jinx', { level: 11, runes: { keystone: 'LethalTempoTemp', minors: [] } }), data, 'A0')
+    const r = fight([j], [buildUnit(cfg('Garen', { level: 18, items: ['3075', '3065'] }), data, 'B0')], { twoWay: false, duration: 15 })
+    expect(r.log.some((e) => e.label === 'Lethal Tempo')).toBe(true) // bolt fires at max stacks
+  })
+  it('Ignite is not amplified by Coup de Grace', () => {
+    const me = (minors) => buildUnit(cfg('Garen', { level: 9, summoners: ['SummonerDot'], runes: { keystone: null, minors } }), data, 'A0')
+    const ign = (u) => fight([u], [buildUnit(cfg('Lux', { level: 9 }), data, 'B0')], { twoWay: false, duration: 6 }).log.filter((e) => e.label === 'Ignite').reduce((s, e) => s + e.amount, 0)
+    expect(ign(me(['CoupDeGrace']))).toBeCloseTo(ign(me([])), 5)
+  })
+})
