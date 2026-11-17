@@ -38,6 +38,12 @@ export function defaultStacks(champId) {
   return s
 }
 
+// Base crit damage: 200% since season 2026 (patch 16.x / "26.1"), 175% before.
+export function baseCritFor(version) {
+  const major = parseInt(String(version || '').split('.')[0], 10)
+  return Number.isFinite(major) && major < 16 ? 1.75 : 2
+}
+
 export function buildUnit(cfg, data, key) {
   const champ = cfg && data.champions[cfg.champ]
   if (!champ) return null
@@ -56,7 +62,7 @@ export function buildUnit(cfg, data, key) {
   }
 
   const level = cfg.level || 1
-  const stats = computeStats({ champ, def, level, items, shards: cfg.shards || [], extra })
+  const stats = computeStats({ champ, def, level, items, shards: cfg.shards || [], extra, baseCritDmg: baseCritFor(data.version) })
   if (def?.rangePerLevel) stats.range += def.rangePerLevel * (level - 1)
   for (const r of runes) {
     if (r.statsPct?.hp) { const add = stats.hp * r.statsPct.hp; stats.hp += add; stats.bonusHp += add }
@@ -94,7 +100,7 @@ export function buildDummies(targetId, lang = 'en') {
     minion: !!d.minion,
     size: d.size,
     level: 1,
-    stats: { hp: d.hp, armor: d.armor, mr: d.mr, ad: 0, ap: 0, range: 0, level: 1, ms: 0, asBase: 0, asRatio: 0, critDmg: 1.75 },
+    stats: { hp: d.hp, armor: d.armor, mr: d.mr, ad: 0, ap: 0, range: 0, level: 1, ms: 0, asBase: 0, asRatio: 0, critDmg: 2 },
     def: null,
     ranks: {},
     combo: [],

@@ -3,6 +3,10 @@
 const STRINGS = {
   en: {
     tagline: 'Build damage calculator & fight simulator',
+    item_search: 'Search name or stat (e.g. crit, lethality)…', sort: 'Sort', sort_price_desc: 'Price: high → low', sort_price_asc: 'Price: low → high', sort_name: 'Name A → Z',
+    max_price: 'Max price', passive_sim: 'passive simulated', category: 'Category', clear: 'Clear', no_items: 'No items match these filters.',
+    boots_slot: 'Boots slot', boot_quest: '6 items + boots (bot lane Role Quest)', boot_quest_hint: 'Since 2026, bot laners who finish their Role Quest put boots in a separate slot.', add_boots: 'Add boots',
+    primary_tree: 'Primary', secondary_tree: 'Secondary', not_simulated: 'not simulated yet',
     stats_vs: 'You vs them — stats', stats_vs_hint: '▲ = ahead. Bottom rows: how much of each side\'s damage gets through the other\'s armor/MR (after penetration).',
     st_hp: 'Health', st_ad: 'Attack damage', st_ap: 'Ability power', st_armor: 'Armor', st_mr: 'Magic resist', st_as: 'Attack speed', st_crit: 'Crit chance', st_critdmg: 'Crit damage',
     st_leth: 'Lethality', st_apen: 'Armor pen', st_mpen: 'Magic pen', st_mpenpct: 'Magic pen %', st_ls: 'Life steal', st_omni: 'Omnivamp', st_ah: 'Ability haste', st_range: 'Range', st_ms: 'Move speed',
@@ -48,6 +52,10 @@ const STRINGS = {
   },
   fr: {
     tagline: 'Calculateur de dégâts & simulateur de combat',
+    item_search: 'Chercher un nom ou une stat (ex. crit, létalité)…', sort: 'Trier', sort_price_desc: 'Prix : haut → bas', sort_price_asc: 'Prix : bas → haut', sort_name: 'Nom A → Z',
+    max_price: 'Prix max', passive_sim: 'passif simulé', category: 'Catégorie', clear: 'Effacer', no_items: 'Aucun objet ne correspond.',
+    boots_slot: 'Emplacement bottes', boot_quest: '6 objets + bottes (quête de rôle bot)', boot_quest_hint: 'Depuis 2026, les bot laners qui finissent leur quête de rôle mettent les bottes dans un emplacement à part.', add_boots: 'Ajouter des bottes',
+    primary_tree: 'Principale', secondary_tree: 'Secondaire', not_simulated: 'pas encore simulée',
     stats_vs: 'Toi vs eux — stats', stats_vs_hint: '▲ = en avance. Lignes du bas : la part des dégâts de chaque côté qui passe l\'armure/RM de l\'autre (après pénétration).',
     st_hp: 'PV', st_ad: 'Dégâts d\'attaque', st_ap: 'Puissance', st_armor: 'Armure', st_mr: 'Résist. magique', st_as: 'Vitesse d\'attaque', st_crit: 'Chance de crit', st_critdmg: 'Dégâts crit',
     st_leth: 'Létalité', st_apen: 'Pén. d\'armure', st_mpen: 'Pén. magique', st_mpenpct: 'Pén. magique %', st_ls: 'Vol de vie', st_omni: 'Omnivampirisme', st_ah: 'Accélération', st_range: 'Portée', st_ms: 'Vitesse',

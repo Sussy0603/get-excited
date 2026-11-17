@@ -71,7 +71,7 @@ export function prefersAd(champ, bonus) {
  * @param shards   ['as','adaptive','hpScale']
  * @param extra    extra flat stats (from runes, stacks…)
  */
-export function computeStats({ champ, def, level, items = [], shards = [], extra = {} }) {
+export function computeStats({ champ, def, level, items = [], shards = [], extra = {}, baseCritDmg = 2 }) {
   const b = champ.stats
   const base = {
     hp: growth(b.hp, b.hpperlevel, level),
@@ -115,7 +115,7 @@ export function computeStats({ champ, def, level, items = [], shards = [], extra
     bonusAsPct,
     as: Math.min(2.5, asBase + asRatio * (bonusAsPct / 100)),
     crit: Math.min(1, bonus.crit),
-    critDmg: 1.75 + bonus.critDmg,
+    critDmg: baseCritDmg + bonus.critDmg,
     lethality: bonus.lethality,
     armorPenPct: Math.min(0.75, bonus.armorPenPct),
     magicPen: bonus.magicPen,

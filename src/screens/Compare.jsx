@@ -10,6 +10,7 @@ import { dummyRun, breakpoints, bestOrder } from '../engine/metrics.js'
 import { useFightSetup, fmt } from './Calculator.jsx'
 import { TARGETS } from '../data/targets.js'
 import { L } from '../i18n.js'
+import { slotInfo, defaultBootSlot } from '../data/itemRules.js'
 
 const COLORS = ['#ff2d95', '#22e6ff', '#ffe14a']
 const LETTERS = ['A', 'B', 'C']
@@ -75,7 +76,7 @@ export default function Compare() {
                   <button key={k} className="btn ghost icon" style={{ padding: 0, border: 'none' }} title={`${data.items[id]?.name} — ${t('remove')}`}
                     onClick={() => setBuild(i, items.filter((_, j) => j !== k))}><ItemIcon id={id} /></button>
                 ))}
-                {items.length < 6 && <button className="add-slot" style={{ width: 40, height: 40, padding: 0 }} onClick={() => setPicking(i)} aria-label={t('add_item')}>+</button>}
+                {!slotInfo(items, data, me.bootSlot ?? defaultBootSlot(data.champions[me.champ])).full && <button className="add-slot" style={{ width: 40, height: 40, padding: 0 }} onClick={() => setPicking(i)} aria-label={t('add_item')}>+</button>}
               </div>
               <div className="row" style={{ marginTop: 8 }}>
                 <button className="btn small" onClick={() => setBuild(i, [...me.items])}>{t('copy_current')}</button>
@@ -113,7 +114,10 @@ export default function Compare() {
         </div>
       )}
 
-      {picking != null && <ItemPicker exclude={builds[picking]} onClose={() => setPicking(null)} onPick={(id) => { setBuild(picking, [...builds[picking], id]); setPicking(null) }} />}
+      {picking != null && (() => {
+        const si = slotInfo(builds[picking], data, me.bootSlot ?? defaultBootSlot(data.champions[me.champ]))
+        return <ItemPicker exclude={builds[picking]} allowItems={si.canAddItem} allowBoots={si.canAddBoots} onClose={() => setPicking(null)} onPick={(id) => { setBuild(picking, [...builds[picking], id]); setPicking(null) }} />
+      })()}
     </div>
   )
 }

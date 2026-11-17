@@ -308,3 +308,18 @@ html.overlay-mode body { background: transparent; }
 .vs td.ahead.vs-them { color: var(--pink); }
 .vs td.ahead::after { content: '▲'; font-size: 0.6rem; margin: 0 6px; position: relative; }
 .vs tr.vs-derived td { border-top: 1px dashed var(--line); padding-top: 9px; }
+
+/* ── Rune page ──────────────────────────────────────────── */
+.runepage { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.rune-col { display: grid; gap: 8px; align-content: start; }
+.rune-row { display: flex; gap: 6px; justify-content: center; padding: 4px 0; border-top: 1px solid #ffffff08; }
+.rune-row.keystones { border-top: none; }
+.rune { background: none; border: 2px solid transparent; border-radius: 50%; padding: 2px; cursor: pointer; filter: grayscale(0.85) brightness(0.75); transition: filter 0.12s, border-color 0.12s; }
+.rune:hover { filter: none; }
+.rune.on { filter: none; border-color: var(--pink); box-shadow: var(--glow-pink); }
+.rune.tree.on { border-color: var(--cyan); box-shadow: var(--glow-cyan); }
+.rune.nosim { opacity: 0.55; }
+.rune.nosim.on { opacity: 1; }
+.rune.big .ico { width: 40px; height: 40px; }
+.tag-name { color: var(--ink); text-transform: none; letter-spacing: 0; }
+html[data-calm='1'] .rune.on { box-shadow: none; }

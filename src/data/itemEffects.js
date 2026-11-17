@@ -32,7 +32,7 @@ const everyN = (n, key, fn) => (ctx) => {
 const ranged = (ctx) => ctx.u.stats.range >= 300
 
 export const ITEM_EFFECTS = {
-  'infinity edge': { stats: { critDmg: 0.4 }, desc: '+40% crit damage' },
+  // Infinity Edge: its crit damage is a normal stat now (read from Riot's data).
 
   'kraken slayer': {
     desc: 'Every 3rd attack: bonus physical damage (more vs low HP)',

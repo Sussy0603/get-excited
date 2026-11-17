@@ -8,10 +8,12 @@ import { useStore, configFor } from '../state/store.jsx'
 import Icon, { ChampIcon, ItemIcon } from './Icon.jsx'
 import { ChampPicker, ItemPicker } from './Pickers.jsx'
 import { CHAMP_DEFS, VERIFIED, abilityStatus, defaultCombo, kitLevel } from '../data/champs/index.js'
-import { RUNE_EFFECTS, SUMMONERS } from '../data/runes.js'
+import { SUMMONERS } from '../data/runes.js'
+import RunePage from './RunePage.jsx'
 import { SHARDS, SHARD_ROWS } from '../engine/stats.js'
 import { loadChampDetail } from '../data/ddragon.js'
 import { L } from '../i18n.js'
+import { slotInfo, defaultBootSlot, isBoots } from '../data/itemRules.js'
 
 export function useChampDetail(champId) {
   const { data, lang } = useStore()
@@ -35,7 +37,7 @@ export function StatusChip({ champId }) {
 
 export default function UnitEditor({ cfg, onChange, label, accent = 'cyan', onRemove, compact = false }) {
   const { data, t } = useStore()
-  const [picking, setPicking] = useState(null) // 'champ' | 'item'
+  const [picking, setPicking] = useState(null) // 'champ' | 'item' | 'boots'
   const set = (patch) => onChange({ ...cfg, ...patch })
   const detail = useChampDetail(cfg?.champ)
 
@@ -53,6 +55,9 @@ export default function UnitEditor({ cfg, onChange, label, accent = 'cyan', onRe
   const def = CHAMP_DEFS[cfg.champ]
   const items = cfg.items || []
   const cumulative = items.map((_, i) => items.slice(0, i + 1).reduce((sum, id) => sum + (data.items[id]?.gold || 0), 0))
+  const bootSlot = cfg.bootSlot ?? defaultBootSlot(champ)
+  const slots = slotInfo(items, data, bootSlot)
+  const startRole = ['Marksman', 'Assassin', 'Mage', 'Fighter', 'Tank', 'Support'].find((r) => (champ?.tags || []).includes(r)) || 'all'
 
   return (
     <div className={`panel ${accent === 'pink' ? '' : 'hot'}`}>
@@ -93,7 +98,7 @@ export default function UnitEditor({ cfg, onChange, label, accent = 'cyan', onRe
               <div className="slot" key={`${id}-${i}`}>
                 <ItemIcon id={id} />
                 <div>
-                  <div className="small">{i + 1}. {it?.name || id} {it?.effect && <span title={it.effect.desc} style={{ color: 'var(--yellow)' }}>★</span>}</div>
+                  <div className="small">{i + 1}. {it?.name || id} {it?.effect && <span title={it.effect.desc} style={{ color: 'var(--yellow)' }}>★</span>} {bootSlot && isBoots(it) && <span className="chip cyan" style={{ padding: '0 6px' }}>👢 {t('boots_slot')}</span>}</div>
                   <div className="meta num" style={{ textAlign: 'left' }}>{it?.gold} · Σ {cumulative[i]} {t('gold')}</div>
                 </div>
                 <div className="slot-actions">
@@ -104,7 +109,13 @@ export default function UnitEditor({ cfg, onChange, label, accent = 'cyan', onRe
               </div>
             )
           })}
-          {items.length < 6 && <button className="add-slot" onClick={() => setPicking('item')}>+ {t('add_item')}</button>}
+          <div className="row" style={{ gap: 6 }}>
+            {(slots.canAddItem || slots.canAddBoots) && <button className="add-slot grow" onClick={() => setPicking('item')}>+ {t('add_item')} <span className="tiny">({slots.others}/6)</span></button>}
+            {slots.canAddBoots && <button className="add-slot" onClick={() => setPicking('boots')}>👢 {t('add_boots')}</button>}
+          </div>
+          <label className="toggle small" title={t('boot_quest_hint')}>
+            <input type="checkbox" checked={bootSlot} onChange={(e) => set({ bootSlot: e.target.checked })} /> {t('boot_quest')}
+          </label>
         </div>
       </div>
 
@@ -117,7 +128,12 @@ export default function UnitEditor({ cfg, onChange, label, accent = 'cyan', onRe
       )}
 
       {picking === 'champ' && <ChampPicker onClose={() => setPicking(null)} onPick={(id) => { onChange(configFor(id, data, { level: cfg.level, items: cfg.items })); setPicking(null) }} />}
-      {picking === 'item' && <ItemPicker exclude={items} onClose={() => setPicking(null)} onPick={(id) => { set({ items: [...items, id] }); setPicking(null) }} />}
+      {(picking === 'item' || picking === 'boots') && (
+        <ItemPicker exclude={items} onClose={() => setPicking(null)}
+          allowItems={picking === 'item' && slots.canAddItem} allowBoots={slots.canAddBoots}
+          startRole={picking === 'boots' ? 'Boots' : startRole}
+          onPick={(id) => { set({ items: [...items, id] }); setPicking(null) }} />
+      )}
     </div>
   )
 }
@@ -127,10 +143,7 @@ function Advanced({ cfg, set, def, detail }) {
   const combo = cfg.combo?.length ? cfg.combo : defaultCombo(cfg.champ)
   const allKeys = ['Q', 'W', 'E', 'R'].filter((k) => def?.spells?.[k] && !def.spells[k].toggle)
   const off = allKeys.filter((k) => !combo.includes(k))
-  const keystones = data.trees.flatMap((tr) => tr.slots[0] || [])
-  const minors = data.trees.flatMap((tr) => tr.slots.slice(1).flat()).filter((r) => RUNE_EFFECTS[r.key])
   const chosen = cfg.runes?.minors || []
-  const setRunes = (patch) => set({ runes: { ...cfg.runes, ...patch } })
   const stacks = cfg.stacks || {}
   const extraStacks = def?.stacks || []
   const needsLegend = chosen.some((k) => k.startsWith('Legend'))
@@ -171,28 +184,8 @@ function Advanced({ cfg, set, def, detail }) {
       )}
 
       <div className="section">
-        <h3>{t('keystone')}</h3>
-        <div className="row" style={{ gap: 6 }}>
-          {keystones.map((r) => (
-            <button key={r.key} className="btn ghost icon" aria-pressed={cfg.runes?.keystone === r.key}
-              style={{ borderColor: cfg.runes?.keystone === r.key ? 'var(--pink)' : 'transparent', opacity: RUNE_EFFECTS[r.key] ? 1 : 0.45 }}
-              title={`${r.name}${RUNE_EFFECTS[r.key] ? '' : ' (not simulated)'}`}
-              onClick={() => setRunes({ keystone: cfg.runes?.keystone === r.key ? null : r.key })}>
-              <Icon kind="rune" file={r.icon} label={r.name} size="sm" round />
-            </button>
-          ))}
-        </div>
-        <h3 style={{ marginTop: 12 }}>{t('minors')}</h3>
-        <div className="row" style={{ gap: 6 }}>
-          {minors.map((r) => {
-            const on = chosen.includes(r.key)
-            return (
-              <button key={r.key} className={`chip ${on ? 'on' : ''}`} title={RUNE_EFFECTS[r.key]?.desc}
-                disabled={!on && chosen.length >= 5}
-                onClick={() => setRunes({ minors: on ? chosen.filter((k) => k !== r.key) : [...chosen, r.key] })}>{r.name}</button>
-            )
-          })}
-        </div>
+        <h3>{t('runes')}</h3>
+        <RunePage runes={cfg.runes} onChange={(r) => set({ runes: r })} />
         <h3 style={{ marginTop: 12 }}>{t('shards')}</h3>
         <div className="stack" style={{ gap: 6 }}>
           {SHARD_ROWS.map((row, i) => (

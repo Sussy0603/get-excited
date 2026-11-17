@@ -40,11 +40,16 @@ describe('damage math', () => {
 
 describe('Riot data parsing', () => {
   it('reads item stats from the description', () => {
-    expect(parseItemStats(FIXTURE.itemsEn.data['3031'])).toEqual({ ad: 65, crit: 0.25 })
+    expect(parseItemStats(FIXTURE.itemsEn.data['3031'])).toEqual({ ad: 75, crit: 0.25, critDmg: 0.3 })
     expect(parseItemStats(FIXTURE.itemsEn.data['3036']).armorPenPct).toBeCloseTo(0.35)
   })
+  it('2026 crit: 200% base, IE adds +30% (no double count)', () => {
+    const j = buildUnit(cfg('Jinx', { items: ['3031'] }), data, 'A0')
+    expect(j.stats.critDmg).toBeCloseTo(2.3, 5)
+    const old = buildUnit(cfg('Jinx', { items: ['3031'] }), { ...data, version: '15.24.1' }, 'A0')
+    expect(old.stats.critDmg).toBeCloseTo(2.05, 5)
+  })
   it('attaches item passives by English name', () => {
-    expect(data.items['3031'].effect.stats.critDmg).toBe(0.4)
     expect(data.items['6672'].effect.onHit).toBeTypeOf('function')
   })
 })

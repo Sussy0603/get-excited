@@ -33,7 +33,7 @@ export const FIXTURE = {
   },
   itemsEn: {
     data: {
-      ...item('3031', 'Infinity Edge', 3450, `${a(65, 'Attack Damage')}<br>${a('25%', 'Critical Strike Chance')}`),
+      ...item('3031', 'Infinity Edge', 3500, `${a(75, 'Attack Damage')}<br>${a('25%', 'Critical Strike Chance')}<br>${a('30%', 'Critical Strike Damage')}`),
       ...item('6672', 'Kraken Slayer', 3100, `${a(40, 'Attack Damage')}<br>${a('35%', 'Attack Speed')}<br>${a('4%', 'Move Speed')}`),
       ...item('3036', 'Lord Dominik\'s Regards', 3100, `${a(35, 'Attack Damage')}<br>${a('25%', 'Critical Strike Chance')}<br>${a('35%', 'Armor Penetration')}`),
       ...item('3153', 'Blade of The Ruined King', 3200, `${a(40, 'Attack Damage')}<br>${a('25%', 'Attack Speed')}<br>${a('10%', 'Life Steal')}`),
