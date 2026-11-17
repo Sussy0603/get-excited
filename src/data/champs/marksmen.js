@@ -591,6 +591,25 @@ export const MARKSMEN = {
     },
   },
 
+  // ── YUNARA ───────────────────────────────────────────────
+  Yunara: {
+    asRatio: 0.65,
+    notes: 'APPROXIMATE: newer champion, least-certain numbers of the roster. Q empowers attacks (on-hit magic + attack speed), R transcends her abilities.',
+    spells: {
+      Q: S([10, 9, 8, 7, 6], 0, [buff('asPct', [30, 40, 50, 60, 70], 5), buff('yunQ', [15, 25, 35, 45, 55], 5)], { cast: 0 }),
+      W: S([12, 11, 10, 9, 8], 1000, [dmg(M, [60, 95, 130, 165, 200], { bad: 0.8, ap: 0.5 })], { aoe: true }),
+      E: S([16, 15, 14, 13, 12], 450, [dash(450, 'side'), buff('msPct', 0.4, 2)], { cast: 0 }),
+      R: S([100, 85, 70], 0, [buff('ad', [20, 35, 50], 10), buff('asPct', [20, 30, 40], 10)], { cast: 0 }),
+    },
+    combo: ['R', 'Q', 'W', 'E'],
+    hooks: {
+      onHit: (ctx) => {
+        const q = ctx.buff('yunQ')
+        return q ? [{ dt: M, raw: q + 0.2 * ctx.ap + 0.1 * ctx.bonusAd, label: 'Cultivation of Spirit' }] : []
+      },
+    },
+  },
+
   // ── TEEMO ────────────────────────────────────────────────
   Teemo: {
     asRatio: 0.69,

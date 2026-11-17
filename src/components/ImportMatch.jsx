@@ -1,5 +1,5 @@
 // "Import a match" window: Riot ID → last 5 games → load a build.
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useStore } from '../state/store.jsx'
 import { ChampIcon, ItemIcon } from './Icon.jsx'
 import { fetchMatches, toConfig, IMPORT_API_DEFAULT } from '../data/importMatch.js'
@@ -15,6 +15,12 @@ export default function ImportMatch({ onClose }) {
   const [status, setStatus] = useState('idle') // idle | loading | error | done
   const [error, setError] = useState('')
   const [result, setResult] = useState(null)
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
 
   const search = async (e) => {
     e.preventDefault()

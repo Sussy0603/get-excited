@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '../state/store.jsx'
 import { ChampIcon, ItemIcon } from './Icon.jsx'
-import { abilityStatus, VERIFIED } from '../data/champs/index.js'
+import { abilityStatus, VERIFIED, kitLevel } from '../data/champs/index.js'
 
 function Modal({ title, onClose, tools, children }) {
   const ref = useRef(null)
@@ -46,13 +46,17 @@ export function ChampPicker({ onPick, onClose }) {
         <button aria-pressed={role === 'all'} onClick={() => setRole('all')}>{t('all')}</button>
         {ROLES.map((r) => <button key={r} aria-pressed={role === r} onClick={() => setRole(r)}>{r}</button>)}
       </div>
-      <span className="tiny muted"><span className="pick"><span className="dot" /></span> = abilities simulated</span>
+      <span className="tiny muted">
+        <span className="dot" style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 8, background: 'var(--cyan)' }} /> detailed kit ·{' '}
+        <span className="dot" style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 8, background: 'var(--yellow)' }} /> simplified ·{' '}
+        <span className="dot" style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 8, background: 'var(--good)' }} /> verified
+      </span>
     </>}>
       <div className="grid-pick">
         {list.map((c) => (
           <button key={c.id} className="pick" onClick={() => onPick(c.id)} title={c.title}>
             <ChampIcon id={c.id} />
-            <span>{c.name} {abilityStatus(c.id) === 'full' && <span className="dot" style={{ background: VERIFIED.has(c.id) ? 'var(--good)' : 'var(--cyan)' }} />}</span>
+            <span>{c.name} {abilityStatus(c.id) === 'full' && <span className="dot" style={{ background: VERIFIED.has(c.id) ? 'var(--good)' : kitLevel(c.id) === 'simplified' ? 'var(--yellow)' : 'var(--cyan)' }} />}</span>
           </button>
         ))}
       </div>

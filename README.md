@@ -67,14 +67,22 @@ Run `npm test` — there's a test that makes sure **every** champ can fight with
 - Crits use the **average** (no luck) so results are repeatable.
 - Mana/energy are ignored.
 - Positioning mode is a simple model (move, kite, dash). Good for "who gets there first", not exact.
-- Champions without an ability file only basic-attack (they show a ⚠ badge).
+- **All 171 champions have ability files.** 43 are detailed kits (all marksmen + 15 popular champs). The other ~128 are **simplified kits** (main damage, CC, shields/heals — yellow badge).
+- Support heals/shields go on themselves (no ally targeting yet).
+- Old patches (patch picker): items and base stats change, but ability numbers are from the current patch.
+- Champions added after this was written only basic-attack (⚠ badge) until a kit is added.
 - Lethality formula: check `LETHALITY_SCALES_WITH_LEVEL` in `src/engine/damage.js` each season.
+
+## Import a real match
+
+Click **📥 Import a match** on the Calculator. It needs a tiny free server
+that keeps the Riot API key secret — setup steps in [`worker/README.md`](worker/README.md).
 
 ## Later
 
-1. Import a real build from a match (Riot API — needs a small server)
-2. Ability files for the rest of the roster
-3. Patch picker (compare before/after a nerf)
+1. Verify kits in the Practice Tool (Jinx first) → green "verified" badges
+2. Upgrade the most-played simplified kits to detailed ones
+3. Support heals/shields on allies in Team fight
 
 ---
 

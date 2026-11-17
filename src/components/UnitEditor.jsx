@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react'
 import { useStore, configFor } from '../state/store.jsx'
 import Icon, { ChampIcon, ItemIcon } from './Icon.jsx'
 import { ChampPicker, ItemPicker } from './Pickers.jsx'
-import { CHAMP_DEFS, VERIFIED, abilityStatus, defaultCombo } from '../data/champs/index.js'
+import { CHAMP_DEFS, VERIFIED, abilityStatus, defaultCombo, kitLevel } from '../data/champs/index.js'
 import { RUNE_EFFECTS, SUMMONERS } from '../data/runes.js'
 import { SHARDS, SHARD_ROWS } from '../engine/stats.js'
 import { loadChampDetail } from '../data/ddragon.js'
@@ -29,6 +29,7 @@ export function StatusChip({ champId }) {
   const { t } = useStore()
   if (abilityStatus(champId) !== 'full') return <span className="chip warn" title={t('autos_only')}>⚠ {t('autos_only')}</span>
   if (VERIFIED.has(champId)) return <span className="chip ok">✔ {t('verified')}</span>
+  if (kitLevel(champId) === 'simplified') return <span className="chip warn" title={t('unverified')}>◐ {t('simplified')}</span>
   return <span className="chip cyan" title={t('unverified')}>◐ {t('unverified')}</span>
 }
 
