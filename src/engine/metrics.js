@@ -21,9 +21,7 @@ export function dummyRun(me, foes, opts = {}) {
   const start = mine.firstHitT ?? 0
   const span = Math.max(0.5, (ttk ?? res.t) - start)
   const dmg = total(mine.totals)
-  const burst = res.log
-    .filter((e) => e.kind === 'dmg' && e.src === mine.key && e.t <= start + 3)
-    .reduce((s, e) => s + e.amount, 0)
+  const burst = mine.totals.burst // damage in the first 3s after the first hit
   return {
     ttk: ttk == null ? null : ttk - start,
     dps: dmg / span,

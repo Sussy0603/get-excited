@@ -60,6 +60,9 @@ describe('simulator', () => {
     expect(a.ttk).toBeLessThan(30)
     expect(a.ttk).toBe(b.ttk)
     expect(a.dps).toBeGreaterThan(50)
+    expect(a.burst).toBeGreaterThan(100)
+    const quiet = dummyRun(jinx(), [garen()], { record: false })
+    expect(quiet.burst).toBe(a.burst)
   })
 
   it('more items = faster kill', () => {

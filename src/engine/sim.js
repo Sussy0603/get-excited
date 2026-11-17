@@ -76,7 +76,7 @@ class Sim {
       dead: false,
       deathT: null,
       killedBy: null,
-      totals: { physical: 0, magic: 0, true: 0, heal: 0, shield: 0, taken: 0, dealtTo: {} },
+      totals: { physical: 0, magic: 0, true: 0, heal: 0, shield: 0, taken: 0, burst: 0, dealtTo: {} },
       firstHitT: null,
     }
   }
@@ -84,7 +84,8 @@ class Sim {
   // ── Main loop ────────────────────────────────────────────
   run() {
     const { duration, dt, frameEvery, record } = this.opts
-    let nextFrame = 0
+    if (record) this.snap() // starting HP, before anyone acts
+    let nextFrame = frameEvery
     for (let step = 0; ; step++) {
       this.t = Math.round(step * dt * 1000) / 1000
       if (this.t > duration) break
@@ -162,6 +163,7 @@ class Sim {
     if (!sp || !rank || sp.toggle) return false
     if (this.t < (u.cds[key] || 0)) return false
     if (sp.when === 'never') return false
+    if (key === 'R' && tgt.minion) return false // nobody ults a minion wave
     if (sp.when === 'lowhp' && u.hp / u.maxHp > 0.6) return false
     if (sp.ready && !sp.ready(ctx)) return false
     const hasDmg = sp.effects.some((e) => e.t === 'dmg' || e.t === 'dot')
@@ -359,6 +361,7 @@ class Sim {
     tgt.hp -= rem
     if (src.firstHitT == null) src.firstHitT = t
     src.totals[type] += dmg
+    if (t - src.firstHitT <= 3 + 1e-9) src.totals.burst += dmg
     src.totals.dealtTo[tgt.key] = (src.totals.dealtTo[tgt.key] || 0) + dmg
     tgt.totals.taken += dmg
     this.push({ kind: 'dmg', src: src.key, tgt: tgt.key, label: tags.label || 'Hit', amount: dmg, dtype: type })

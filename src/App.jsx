@@ -1,122 +1,93 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+// ─────────────────────────────────────────────────────────────
+// App — the frame around every screen: logo, tabs, settings, footer.
+// Routes: #/calc  #/enemies  #/team  #/compare  #/saved  #/overlay
+// ─────────────────────────────────────────────────────────────
+import { useEffect, useState } from 'react'
+import { useStore } from './state/store.jsx'
+import Calculator from './screens/Calculator.jsx'
+import Enemies from './screens/Enemies.jsx'
+import Team from './screens/Team.jsx'
+import Compare from './screens/Compare.jsx'
+import Saved from './screens/Saved.jsx'
+import Overlay from './screens/Overlay.jsx'
 
-function App() {
-  const [count, setCount] = useState(0)
+const SCREENS = { calc: Calculator, enemies: Enemies, team: Team, compare: Compare, saved: Saved }
+const TABS = [['calc', 'nav_calc'], ['enemies', 'nav_enemies'], ['team', 'nav_team'], ['compare', 'nav_compare'], ['saved', 'nav_saved']]
+
+export default function App() {
+  const { state, update, data, route, t, saved } = useStore()
+  const [prefsOpen, setPrefsOpen] = useState(false)
+
+  // Reading preferences live on <html> so CSS can react.
+  useEffect(() => {
+    const h = document.documentElement
+    h.dataset.calm = state.prefs.calm ? '1' : '0'
+    h.dataset.easy = state.prefs.easyFont ? '1' : '0'
+    h.dataset.big = state.prefs.bigText ? '1' : '0'
+    h.lang = state.lang
+  }, [state.prefs, state.lang])
+
+  useEffect(() => {
+    if (!prefsOpen) return
+    const close = (e) => { if (!e.target.closest('.prefs')) setPrefsOpen(false) }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [prefsOpen])
+
+  if (!data) return <div className="loading"><span className="spin">{t('loading')}</span></div>
+  if (route.route === 'overlay') return <Overlay />
+
+  const Screen = SCREENS[route.route] || Calculator
+  const enemyCount = state.enemies.filter(Boolean).length
 
   return (
     <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      <div className="mobile-gate">
+        <div className="logo">GET <span>EXCITED</span></div>
+        <p>{t('mobile_gate')}</p>
+      </div>
 
-      <div className="ticks"></div>
+      <div className="app">
+        <header className="topbar">
+          <a className="logo" href="#/calc" aria-label="Get Excited — home">GET <span>EXCITED</span><small>{t('tagline')}</small></a>
+          <nav className="nav" aria-label="Main">
+            {TABS.map(([id, key]) => (
+              <a key={id} href={`#/${id}`} aria-current={(route.route || 'calc') === id ? 'page' : undefined}>
+                {t(key)}
+                {id === 'enemies' && enemyCount > 0 && <span className="tiny"> ({enemyCount})</span>}
+                {id === 'saved' && saved.length > 0 && <span className="tiny"> ({saved.length})</span>}
+              </a>
+            ))}
+          </nav>
+          <span className="spacer" />
+          <div className="seg" role="group" aria-label="Language">
+            <button aria-pressed={state.lang === 'en'} onClick={() => update((s) => { s.lang = 'en' })}>EN</button>
+            <button aria-pressed={state.lang === 'fr'} onClick={() => update((s) => { s.lang = 'fr' })}>FR</button>
+          </div>
+          <div className="prefs">
+            <button className="btn" aria-expanded={prefsOpen} onClick={() => setPrefsOpen(!prefsOpen)}>Aa {t('prefs')}</button>
+            {prefsOpen && (
+              <div className="prefs-pop">
+                {[['calm', 'calm'], ['easyFont', 'easy_font'], ['bigText', 'big_text']].map(([k, label]) => (
+                  <label key={k} className="toggle">
+                    <input type="checkbox" checked={state.prefs[k]} onChange={(e) => update((s) => { s.prefs[k] = e.target.checked })} />
+                    {t(label)}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        </header>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        {data.offline && <div className="notice" role="status">⚠ {t('offline')}</div>}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+        <main><Screen /></main>
+
+        <footer className="footer">
+          <div>{t('made_by')} · {t('patch')} {data.version}</div>
+          <div>{t('legal')}</div>
+        </footer>
+      </div>
     </>
   )
 }
-
-export default App
