@@ -3,6 +3,10 @@
 const STRINGS = {
   en: {
     tagline: 'Build damage calculator & fight simulator',
+    stats_vs: 'You vs them — stats', stats_vs_hint: '▲ = ahead. Bottom rows: how much of each side\'s damage gets through the other\'s armor/MR (after penetration).',
+    st_hp: 'Health', st_ad: 'Attack damage', st_ap: 'Ability power', st_armor: 'Armor', st_mr: 'Magic resist', st_as: 'Attack speed', st_crit: 'Crit chance', st_critdmg: 'Crit damage',
+    st_leth: 'Lethality', st_apen: 'Armor pen', st_mpen: 'Magic pen', st_mpenpct: 'Magic pen %', st_ls: 'Life steal', st_omni: 'Omnivamp', st_ah: 'Ability haste', st_range: 'Range', st_ms: 'Move speed',
+    st_phys_taken: 'Physical dmg through', st_magic_taken: 'Magic dmg through',
     import: 'Import a match', region: 'Region', import_api: 'Import server (your Cloudflare Worker URL)', search_games: 'Find my games',
     import_setup: 'Import needs a small free server that keeps the Riot key secret. Setup steps: worker/README.md in the GitHub repo.',
     imp_err: 'Import failed', imp_err_notfound: 'Riot ID not found. Check the name, the #TAG and the region.', imp_err_key: 'The Riot API key is missing or expired (dev keys last 24h).',
@@ -44,6 +48,10 @@ const STRINGS = {
   },
   fr: {
     tagline: 'Calculateur de dégâts & simulateur de combat',
+    stats_vs: 'Toi vs eux — stats', stats_vs_hint: '▲ = en avance. Lignes du bas : la part des dégâts de chaque côté qui passe l\'armure/RM de l\'autre (après pénétration).',
+    st_hp: 'PV', st_ad: 'Dégâts d\'attaque', st_ap: 'Puissance', st_armor: 'Armure', st_mr: 'Résist. magique', st_as: 'Vitesse d\'attaque', st_crit: 'Chance de crit', st_critdmg: 'Dégâts crit',
+    st_leth: 'Létalité', st_apen: 'Pén. d\'armure', st_mpen: 'Pén. magique', st_mpenpct: 'Pén. magique %', st_ls: 'Vol de vie', st_omni: 'Omnivampirisme', st_ah: 'Accélération', st_range: 'Portée', st_ms: 'Vitesse',
+    st_phys_taken: 'Dégâts phys. qui passent', st_magic_taken: 'Dégâts mag. qui passent',
     import: 'Importer une partie', region: 'Région', import_api: 'Serveur d\'import (URL de ton Worker Cloudflare)', search_games: 'Trouver mes parties',
     import_setup: 'L\'import a besoin d\'un petit serveur gratuit qui garde la clé Riot secrète. Étapes : worker/README.md sur GitHub.',
     imp_err: 'Import échoué', imp_err_notfound: 'Riot ID introuvable. Vérifie le nom, le #TAG et la région.', imp_err_key: 'La clé API Riot manque ou est expirée (les clés dev durent 24 h).',

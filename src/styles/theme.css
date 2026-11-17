@@ -290,3 +290,21 @@ html.overlay-mode body { background: transparent; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ── You vs Them stats ──────────────────────────────────── */
+.vs { width: 100%; border-collapse: separate; border-spacing: 0 4px; }
+.vs th { font-weight: 700; font-size: 0.9rem; padding-bottom: 6px; }
+.vs th.vs-me { text-align: left; } .vs th.vs-them { text-align: right; }
+.vs th .ico { vertical-align: middle; }
+.vs td { position: relative; padding: 5px 10px; font-size: 0.9rem; }
+.vs td.vs-label { text-align: center; color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; width: 1%; }
+.vs td.vs-me { text-align: left; width: 45%; }
+.vs td.vs-them { text-align: right; width: 45%; }
+.vs td > span:last-child { position: relative; }
+.vs-bar { position: absolute; top: 3px; bottom: 3px; border-radius: 6px; opacity: 0.18; }
+.vs-bar.me { right: 0; background: var(--cyan); }
+.vs-bar.them { left: 0; background: var(--pink); }
+.vs td.ahead.vs-me { color: var(--cyan); }
+.vs td.ahead.vs-them { color: var(--pink); }
+.vs td.ahead::after { content: '▲'; font-size: 0.6rem; margin: 0 6px; position: relative; }
+.vs tr.vs-derived td { border-top: 1px dashed var(--line); padding-top: 9px; }

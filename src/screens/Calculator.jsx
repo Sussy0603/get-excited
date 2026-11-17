@@ -11,6 +11,7 @@ import FightLog from '../components/FightLog.jsx'
 import Arena from '../components/Arena.jsx'
 import ShareBar from '../components/ShareBar.jsx'
 import ImportMatch from '../components/ImportMatch.jsx'
+import StatsVs from '../components/StatsVs.jsx'
 import { buildUnit, buildDummies } from '../engine/build.js'
 import { dummyRun, fight, effectiveHp, enemyMix } from '../engine/metrics.js'
 import { TARGETS, TARGET_IDS } from '../data/targets.js'
@@ -150,6 +151,11 @@ export default function Calculator() {
                 <div className="sub">{fmt(results.ehp.physical)} {t('vs_phys')} · {fmt(results.ehp.magic)} {t('vs_magic')}</div>
               </div>
             </div>
+
+            {target === 'champ' && focusFoe && (
+              <StatsVs me={meU} foe={focusFoe} foes={foes.filter(Boolean)}
+                onFocus={(key) => update((s) => { s.focus = +key.slice(1) })} />
+            )}
 
             <div className="row" style={{ alignItems: 'stretch', gap: 'var(--gap)' }}>
               {target === 'champ' && results.perEnemy.length > 0 && (
