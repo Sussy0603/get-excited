@@ -304,7 +304,7 @@ export const MARKSMEN = {
       Q: S(16, 0, [buff('asPct', [45, 50, 55, 60, 65], [10, 11, 12, 13, 14])], { cast: 0, when: 'start' }),
       W: S([13, 12, 11, 10, 9], 950, [], { aoe: true }),
       E: S([12, 11, 10, 9, 8], 1200, [dmg(P, [20, 30, 40, 50, 60], {}, {
-        extra: (ctx) => ctx.mark('venom') * (atRank([15, 20, 25, 30, 35], ctx.rank.E) + 0.35 * ctx.bonusAd + 0.333 * ctx.ap),
+        extra: (ctx) => ctx.mark('venom') * (atRank([15, 20, 25, 30, 35], ctx.rank.E) + 0.35 * ctx.bonusAd + 0.35 * ctx.ap),
       })], { ready: (ctx) => ctx.mark('venom') >= 6 || ctx.tgt.hp / ctx.tgt.maxHp < 0.25 }),
       R: S(90, 1100, [buff('ad', [30, 45, 60], 6), buff('range', 300, 6)], { cast: 0 }),
     },
@@ -325,12 +325,12 @@ export const MARKSMEN = {
   Tristana: {
     asRatio: 0.679,
     rangePerLevel: 8,
-    notes: 'E bomb gains +30% per stack (attacks/spells), bursts at 4 stacks.',
+    notes: 'E bomb gains +25% per stack (attacks/spells), bursts at 4 stacks.',
     spells: {
       Q: S([20, 19, 18, 17, 16], 0, [buff('asPct', [50, 65, 80, 95, 110], 7)], { cast: 0 }),
-      W: S([22, 20.5, 19, 17.5, 16], 900, [dash(900, 'to'), dmg(M, [95, 145, 195, 245, 295], { ap: 0.5 })], { aoe: true, when: 'execute' }),
+      W: S([22, 20.5, 19, 17.5, 16], 900, [dash(900, 'to'), dmg(M, [70, 105, 140, 175, 210], { bad: 0.5, ap: 0.5 })], { aoe: true, when: 'execute' }),
       E: S([16, 15.5, 15, 14.5, 14], 600, [], { cast: 0.15 }),
-      R: S([100, 85, 70], 600, [dmg(M, [300, 400, 500], { ap: 1 })], { when: 'execute' }),
+      R: S([100, 85, 70], 600, [dmg(M, [275, 325, 375], { bad: 0.7, ap: 1 })], { when: 'execute' }),
     },
     combo: ['E', 'Q', 'R', 'W'],
     hooks: {
@@ -345,7 +345,7 @@ export const MARKSMEN = {
         if (b.stacks < 4 && ctx.t < b.at) return []
         ctx.u.st.bomb = null
         const r = ctx.rank.E
-        const raw = (atRank([70, 80, 90, 100, 110], r) + atRank([0.5, 0.75, 1, 1.25, 1.5], r) * ctx.bonusAd + 0.5 * ctx.ap) * (1 + 0.3 * Math.min(4, b.stacks))
+        const raw = (atRank([60, 85, 110, 135, 160], r) + 0.8 * ctx.bonusAd + 0.5 * ctx.ap) * (1 + 0.25 * Math.min(4, b.stacks)) * (1 + 0.75 * ctx.u.stats.crit)
         return [{ dt: P, raw, label: 'Explosive Charge' }]
       },
     },
@@ -382,7 +382,7 @@ export const MARKSMEN = {
     asRatio: 0.625,
     notes: 'Spell shield (E) not simulated.',
     spells: {
-      Q: S([10, 9, 8, 7, 6], 1250, [dmg(P, [15, 30, 45, 60, 75], { ad: [0.8, 0.85, 0.9, 0.95, 1], ap: 0.6 }, { hits: 2, crit: true })], { aoe: true }),
+      Q: S([10, 9, 8, 7, 6], 1250, [dmg(P, [60, 85, 110, 135, 160], { bad: 0.7, ap: 0.6 }, { hits: 2, crit: true })], { aoe: true }),
       W: S([12, 10.5, 9, 7.5, 6], 0, [buff('asPct', [20, 25, 30, 35, 40], 4)], { cast: 0 }),
       R: S([120, 100, 80], 1000, [buff('msPct', [0.2, 0.25, 0.3], 8)], { cast: 0 }),
     },
@@ -395,9 +395,9 @@ export const MARKSMEN = {
     notes: 'W adds range and % max HP magic on-hit. R cost is approximated as a longer cooldown.',
     spells: {
       Q: S(8, 1200, [dmg(M, [90, 140, 190, 240, 290], { ap: 0.7 })]),
-      W: S(17, 0, [buff('range', [130, 150, 170, 190, 210], 8), buff('kogW', [0.0375, 0.045, 0.0525, 0.06, 0.0675], 8)], { cast: 0, when: 'start' }),
+      W: S(17, 0, [buff('range', [130, 150, 170, 190, 210], 8), buff('kogW', [0.035, 0.0425, 0.05, 0.0575, 0.065], 8)], { cast: 0, when: 'start' }),
       E: S(12, 1360, [dmg(M, [75, 120, 165, 210, 255], { ap: 0.7 })], { aoe: true }),
-      R: S([4, 3.5, 3], [1300, 1550, 1800], [dmg(M, [100, 140, 180], { bad: 0.65, ap: 0.35 }, { missingMult: 1 })], { aoe: true, keepCd: true }),
+      R: S([4, 3.5, 3], [1300, 1550, 1800], [dmg(M, [100, 140, 180], { bad: 0.75, ap: 0.4 }, { missingMult: 1 })], { aoe: true, keepCd: true }),
     },
     combo: ['W', 'Q', 'E', 'R'],
     hooks: {
@@ -429,9 +429,9 @@ export const MARKSMEN = {
     asRatio: 0.547,
     notes: 'Her basic attack IS Burst Fire (Q). Range 825.',
     rangeBonus: 325,
-    autoOverride: (ctx) => ({ dt: P, raw: atRank([15, 17, 19, 21, 23], ctx.rank.Q || 1) + atRank([1.04, 1.08, 1.12, 1.16, 1.2], ctx.rank.Q || 1) * ctx.ad }),
+    autoOverride: (ctx) => ({ dt: P, raw: atRank([22, 26, 30, 34, 38], ctx.rank.Q || 1) + atRank([1.02, 1.04, 1.06, 1.08, 1.1], ctx.rank.Q || 1) * ctx.ad }),
     spells: {
-      W: S([13, 12, 11, 10, 9], 1200, [dmg(P, [20, 60, 100, 140, 180], { ad: 1.3, ap: 0.25 })], { cast: 0.55 }),
+      W: S([13, 12, 11, 10, 9], 1200, [dmg(P, [30, 70, 110, 150, 190], { ad: 1.3, ap: 0.25 })], { cast: 0.55 }),
       E: S([23, 21.5, 20, 18.5, 17], 300, [dash(300, 'side')], { cast: 0 }),
       R: S([100, 85, 70], 825, [dmg(M, [200, 300, 400], { bad: 0.85, ap: 1.1 }), buff('asPct', 25, 5)], { aoe: true }),
     },
@@ -467,9 +467,9 @@ export const MARKSMEN = {
     asRatio: 0.694,
     notes: 'Attacks deal 90% AD and stick spears. E rips them out.',
     spells: {
-      Q: S(8, 1200, [dmg(P, [20, 85, 150, 215, 280], { ad: 1.05 })], { cast: 0.25 }),
+      Q: S(8, 1200, [dmg(P, [10, 75, 140, 205, 270], { ad: 1.05 })], { cast: 0.25 }),
       E: S([14, 12.5, 11, 9.5, 8], 1100, [dmg(P, [10, 20, 30, 40, 50], { ad: 0.7 }, {
-        extra: (ctx) => Math.max(0, ctx.mark('spear') - 1) * (atRank([8, 12, 16, 20, 24], ctx.rank.E) + atRank([0.2, 0.25, 0.3, 0.35, 0.4], ctx.rank.E) * ctx.ad),
+        extra: (ctx) => Math.max(0, ctx.mark('spear') - 1) * (atRank([7, 14, 21, 28, 35], ctx.rank.E) + atRank([0.2, 0.25, 0.3, 0.35, 0.4], ctx.rank.E) * ctx.ad + 0.2 * ctx.ap),
       })], { cast: 0, ready: (ctx) => ctx.mark('spear') >= 6 || ctx.tgt.hp / ctx.tgt.maxHp < 0.2 }),
     },
     combo: ['Q', 'E'],
@@ -486,10 +486,10 @@ export const MARKSMEN = {
     notes: 'Basic attacks deal 80% magic / 20% physical.',
     attackSplit: { magic: 0.8 },
     spells: {
-      Q: S([8, 7.5, 7, 6.5, 6], 825, [dmg(M, [70, 115, 160, 205, 250], { bad: 0.7, ap: 0.5 })], { aoe: true }),
+      Q: S([8, 7.5, 7, 6.5, 6], 825, [dmg(M, [60, 105, 150, 195, 240], { bad: 1.25, ap: 1 })], { aoe: true }),
       W: S([20, 19, 18, 17, 16], 600, [dash(600, 'to'), dot(M, [60, 90, 120, 150, 180], { ap: 0.4 }, 1)], { when: 'execute' }),
       E: S(16, 600, [dot(M, [60, 90, 120, 150, 180], { bad: 0.6 }, 4)], { cast: 0 }),
-      R: S([3, 2.5, 2], 1300, [dmg(M, [80, 115, 150], { ad: [0.15, 0.45, 0.75], ap: 0.12 })], { aoe: true, keepCd: true }),
+      R: S([3, 2.5, 2], 1300, [dmg(P, [90, 170, 250], { bad: 0.85 })], { aoe: true, keepCd: true }),
     },
     combo: ['R', 'Q', 'E', 'W'],
   },
@@ -500,7 +500,7 @@ export const MARKSMEN = {
     notes: 'Set Mist souls in Stacks (+AD, +range, +crit).',
     stacks: [{ key: 'souls', label: { en: 'Mist souls', fr: 'Âmes de brume' }, max: 200, def: 40 }],
     spells: {
-      Q: S([15, 14.5, 14, 13.5, 13], 600, [dmg(P, [30, 65, 100, 135, 170], { bad: 0.5 })], { cast: 0.4 }),
+      Q: S([15, 14.5, 14, 13.5, 13], 600, [dmg(P, [30, 55, 80, 105, 130], { bad: 0.6 })], { cast: 0.4 }),
       W: S([11, 10.5, 10, 9.5, 9], 1250, [dmg(P, [70, 115, 160, 205, 250], { bad: 0.7 }), cc(1.25)], { cast: 0.25 }),
       R: S([160, 140, 120], 25000, [dmg(P, [250, 400, 550], { bad: 1.15, ap: 0.7 })], { cast: 1, when: 'execute', aoe: true }),
     },
@@ -523,8 +523,8 @@ export const MARKSMEN = {
     stacks: [{ key: 'marks', label: { en: 'Marks', fr: 'Marques' }, max: 20, def: 4 }],
     spells: {
       Q: S(9, 340, [dash(300, 'side'), dmg(P, [40, 65, 90, 115, 140], { bad: 0.75 }), buff('asPct', 35, 4)], { aoe: true }),
-      W: S([18, 17, 16, 15, 14], 500, [dot(M, [25, 30, 35, 40, 45], { bad: 0.2 }, 3, { extra: (ctx) => (0.01 + 0.01 * (ctx.u.stacks.marks || 0)) * ctx.tgt.hp })], { cast: 0 }),
-      E: S([14, 13, 12, 11, 10], 500, [dmg(P, [80, 100, 120, 140, 160], { bad: 0.8, tmiss: 0.08 })]),
+      W: S([18, 17, 16, 15, 14], 500, [dot(M, [25, 30, 35, 40, 45], { bad: 0.2, ap: 0.2 }, 3, { extra: (ctx) => (0.015 + 0.01 * (ctx.u.stacks.marks || 0)) * ctx.tgt.hp })], { cast: 0 }),
+      E: S([14, 13, 12, 11, 10], 500, [dmg(P, [80, 100, 120, 140, 160], { bad: 0.8, tmiss: 0.05 })]),
     },
     combo: ['W', 'Q', 'E'],
     hooks: { init: (u) => { const m = u.stacks.marks || 0; if (m >= 4) u.stats.range += 75 + 25 * Math.floor((m - 4) / 3) } },
@@ -535,7 +535,7 @@ export const MARKSMEN = {
     asRatio: 0.49,
     notes: 'Shotgun: assumes close range (most pellets hit). Reloads after 2 shells.',
     spells: {
-      Q: S([14, 12.5, 11, 9.5, 8], 800, [dmg(P, [45, 60, 75, 90, 105], { bad: 0.8 }), dmg(P, [85, 120, 155, 190, 225], { bad: [0.4, 0.7, 1, 1.3, 1.6] })], { aoe: true }),
+      Q: S([14, 12.5, 11, 9.5, 8], 800, [dmg(P, [45, 60, 75, 90, 105], { bad: 0.8 }), dmg(P, [85, 120, 155, 190, 225], { bad: [0.4, 0.65, 0.9, 1.15, 1.4] })], { aoe: true }),
       W: S([26, 24, 22, 20, 18], 950, [dmg(M, [60, 110, 160, 210, 260], { ap: 0.6 })], { aoe: true }),
       E: S([16, 15, 14, 13, 12], 375, [dash(375, 'side'), buff('armor', [24, 36, 48, 60, 72], 4), reset()], { cast: 0 }),
       R: S([120, 90, 60], 1000, [dmg(P, [275, 425, 575], { bad: 1.5 })], { when: 'execute', aoe: true }),
@@ -556,7 +556,7 @@ export const MARKSMEN = {
     asRatio: 0.668,
     notes: 'Harrier marks every ~8s (and from Q/E). Popping a mark gives Heightened Senses AS.',
     spells: {
-      Q: S([11, 10, 9, 8, 7], 1025, [dmg(P, [20, 40, 60, 80, 100], { ad: [0.8, 0.9, 1, 1.1, 1.2], ap: 0.5 })], { aoe: true }),
+      Q: S([11, 10, 9, 8, 7], 1025, [dmg(P, [20, 40, 60, 80, 100], { ad: [0.8, 0.85, 0.9, 0.95, 1], ap: 0.5 })], { aoe: true }),
       E: S([12, 11, 10, 9, 8], 675, [dash(300, 'away'), dmg(P, [40, 70, 100, 130, 160], { bad: 0.2 }), cc(0.5)]),
     },
     combo: ['E', 'Q'],
@@ -567,7 +567,7 @@ export const MARKSMEN = {
         if (!ctx.mark('harrier')) return []
         ctx.clearMark('harrier')
         if (ctx.rank.W) ctx.giveBuff('asPct', atRank([28, 36, 44, 52, 60], ctx.rank.W), 2)
-        return [{ dt: P, raw: byLevel(10, 95, lvl(ctx)) + 1.2 * ctx.bonusAd, label: 'Harrier' }]
+        return [{ dt: P, raw: byLevel(15, 132.35, lvl(ctx)) + 0.4 * ctx.bonusAd, label: 'Harrier' }]
       },
     },
   },
@@ -588,7 +588,7 @@ export const MARKSMEN = {
         ctx.addMark('dirty', 1, 2)
         if (ctx.mark('dirty') < 3) return []
         ctx.clearMark('dirty')
-        return [{ dt: M, raw: byLevel(10, 165, lvl(ctx)) + 0.6 * ctx.ap, label: 'Dirty Fighting' }]
+        return [{ dt: M, raw: (lvl(ctx) >= 16 ? 150 : lvl(ctx) >= 11 ? 80 : lvl(ctx) >= 6 ? 40 : 15), label: 'Dirty Fighting' }]
       },
     },
   },
@@ -629,7 +629,7 @@ export const MARKSMEN = {
         // on-hit + 1 attack-interval worth of the poison
         return [
           { dt: M, raw: atRank([14, 25, 36, 47, 58], r) + 0.3 * ctx.ap, label: 'Toxic Shot' },
-          { dt: M, raw: ((atRank([24, 48, 72, 96, 120], r) + 0.4 * ctx.ap) / 4) / Math.max(0.5, ctx.as), label: 'Poison' },
+          { dt: M, raw: ((atRank([24, 48, 72, 96, 120], r) + 0.1 * ctx.bonusAd + 0.4 * ctx.ap) / 4) / Math.max(0.5, ctx.as), label: 'Poison' },
         ]
       },
     },
