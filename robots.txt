@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://sussy0603.github.io/get-excited/sitemap.xml
