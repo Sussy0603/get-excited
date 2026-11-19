@@ -288,7 +288,7 @@ class Sim {
       R(e.base) + R(e.ad) * this.ad(u) + R(e.bad) * this.bonusAd(u) + R(e.ap) * this.ap(u) +
       R(e.thp) * x.maxHp + R(e.tmiss) * (x.maxHp - x.hp) + R(e.tcur) * x.hp +
       R(e.hp) * u.maxHp + R(e.bhp) * (u.stats.bonusHp || 0) +
-      R(e.armor) * this.armor(u) + R(e.barmor) * (u.stats.bonusArmor || 0)
+      R(e.armor) * this.armor(u) + R(e.barmor) * (u.stats.bonusArmor || 0) + R(e.bmr) * (u.stats.bonusMr || 0)
     if (e.extra) v += e.extra(this.ctx(u, x))
     if (e.missingMult) v *= 1 + e.missingMult * (1 - x.hp / x.maxHp)
     const hits = typeof e.hits === 'function' ? e.hits(this.ctx(u, x)) : R(e.hits ?? 1)

@@ -31,7 +31,7 @@ export const FIGHTERS = {
       R: S([120, 100, 80], 0, [buff('ad', [30, 50, 70], 10), buff('msPct', 0.6, 3)], { cast: 0, when: 'start' }),
     },
     combo: ['R', 'Q', 'W', 'E'],
-    hooks: { onHit: timed('dbs', 15, (ctx) => { ctx.sim.healUnit(ctx.u, 0.5 * byLevel(0.04, 0.13, lvl(ctx)) * ctx.tgt.maxHp, 'Deathbringer'); return [{ dt: P, raw: byLevel(0.04, 0.13, lvl(ctx)) * ctx.tgt.maxHp, label: 'Deathbringer Stance' }] }) },
+    hooks: { onHit: timed('dbs', 15, (ctx) => { ctx.sim.healUnit(ctx.u, byLevel(0.04, 0.1, lvl(ctx)) * ctx.tgt.maxHp, 'Deathbringer'); return [{ dt: P, raw: byLevel(0.04, 0.1, lvl(ctx)) * ctx.tgt.maxHp, label: 'Deathbringer Stance' }] }) },
   },
   Ambessa: {
     notes: `${SIMPLE} Dashes after each spell empower the next attack.`,
@@ -158,7 +158,7 @@ export const FIGHTERS = {
     combo: ['R', 'E', 'Q', 'W'],
     hooks: {
       onHit: nth('vital', 2, (ctx) => {
-        const pct = 0.03 + (0.04 * ctx.bonusAd) / 100
+        const pct = 0.03 + (0.045 * ctx.bonusAd) / 100
         ctx.sim.healUnit(ctx.u, byLevel(35, 100, lvl(ctx)), 'Vital')
         return [{ dt: T, raw: pct * ctx.tgt.maxHp, label: 'Duelist\'s Dance' }]
       }),
@@ -208,13 +208,13 @@ export const FIGHTERS = {
   Gwen: {
     notes: `${SIMPLE} On-hit % max HP magic. Q assumes full stacks + center snips (true).`,
     spells: {
-      Q: S([6.5, 5.75, 5, 4.25, 3.5], 450, [dmg(M, [10, 15, 20, 25, 30], { ap: 0.05 }, { hits: 4 }), dmg(T, [35, 50, 65, 80, 95], { ap: 0.25 })], { aoe: true }),
+      Q: S([6.5, 5.75, 5, 4.25, 3.5], 450, [dmg(M, [10, 14, 18, 22, 26], { ap: 0.05 }, { hits: 4 }), dmg(T, [70, 95, 120, 145, 170], { ap: 0.35 })], { aoe: true }),
       W: S([22, 21, 20, 19, 18], 0, [buff('armor', 22, 4), buff('mr', 22, 4)], { cast: 0, when: 'lowhp' }),
       E: S([13, 12.5, 12, 11.5, 11], 350, [dash(350, 'to'), buff('asPct', [35, 45, 55, 65, 75], 4), buff('range', 75, 4)], { cast: 0 }),
-      R: S([120, 100, 80], 1350, [dmg(M, [35, 65, 95], { ap: 0.1, thp: 0.01 }, { hits: 9 })], { cast: 0.25, aoe: true }),
+      R: S([120, 100, 80], 1350, [dmg(M, [30, 60, 90], { ap: 0.08, thp: 0.01 }, { hits: 9 })], { cast: 0.25, aoe: true }),
     },
     combo: ['E', 'R', 'Q', 'W'],
-    hooks: { onHit: (ctx) => { const dmgv = (0.01 + (0.008 * ctx.ap) / 100) * ctx.tgt.maxHp; ctx.sim.healUnit(ctx.u, 0.5 * dmgv, null); return [{ dt: M, raw: dmgv, label: 'Thousand Cuts' }] } },
+    hooks: { onHit: (ctx) => { const dmgv = (0.01 + (0.0055 * ctx.ap) / 100) * ctx.tgt.maxHp; ctx.sim.healUnit(ctx.u, Math.min(0.67 * dmgv, byLevel(12, 40, lvl(ctx)) + 0.07 * ctx.ap), null); return [{ dt: M, raw: dmgv, label: 'Thousand Cuts' }] } },
   },
   Hecarim: {
     notes: `${SIMPLE} E charge assumed full distance. W heals from damage dealt.`,
@@ -247,7 +247,7 @@ export const FIGHTERS = {
     },
     combo: ['E', 'R', 'Q', 'W'],
     hooks: {
-      asBonus: (u) => ((u.st.ionia || 0) >= 4 ? byLevel(7.5, 20, u.stats.level) * 4 : 0),
+      asBonus: (u) => ((u.st.ionia || 0) >= 4 ? byLevel(10, 25, u.stats.level) * 4 : 0),
       onSpell: (ctx) => { ctx.u.st.ionia = Math.min(4, (ctx.u.st.ionia || 0) + 1) },
       onHit: (ctx) => ((ctx.u.st.ionia || 0) >= 4 ? [{ dt: M, raw: byLevel(10, 61, lvl(ctx)) + 0.2 * ctx.bonusAd, label: 'Ionian Fervor' }] : []),
     },
@@ -255,7 +255,7 @@ export const FIGHTERS = {
   Jax: {
     notes: `${SIMPLE} Attack speed stacks (passive). E dodges attacks then stuns.`,
     spells: {
-      Q: S([8, 7.5, 7, 6.5, 6], 700, [dash(700, 'to'), dmg(P, [65, 105, 145, 185, 225], { bad: 1, ap: 0.6 })]),
+      Q: S([8, 7.5, 7, 6.5, 6], 700, [dash(700, 'to'), dmg(P, [65, 105, 145, 185, 225], { bad: 1 })]),
       W: S([7, 6, 5, 4, 3], 300, [empower(1, dmg(M, [50, 85, 120, 155, 190], { ap: 0.6 })), reset()], { cast: 0 }),
       E: S([17, 15, 13, 11, 9], 300, [buff('dmgRed', 0.25, 2), dmg(P, [55, 80, 105, 130, 155], { thp: 0.035 }), cc(1)], { cast: 2, aoe: true }),
       R: S([80, 70, 60], 0, [buff('armor', [45, 60, 75], 8), buff('mr', [27, 36, 45], 8), buff('jaxR', 1, 8)], { cast: 0 }),
@@ -279,13 +279,13 @@ export const FIGHTERS = {
   KSante: {
     notes: `${SIMPLE} Base form. Ntofo strikes passive marks deal % max HP.`,
     spells: {
-      Q: S([3.5, 3.5, 3.5, 3.5, 3.5], 465, [dmg(P, [30, 60, 90, 120, 150], { barmor: 0.4, bhp: 0.4 }, { extra: (ctx) => 0 })], { aoe: true }),
+      Q: S([3.5, 3.5, 3.5, 3.5, 3.5], 465, [dmg(P, [70, 100, 130, 160, 190], { barmor: 0.4, bmr: 0.4 }, { extra: (ctx) => 0 })], { aoe: true }),
       W: S([24, 22, 20, 18, 16], 450, [buff('dmgRed', 0.5, 1), dash(450, 'to'), dmg(P, 0, { thp: [0.06, 0.065, 0.07, 0.075, 0.08] }), cc(0.5)], { cast: 1, aoe: true }),
       E: S([10.5, 10, 9.5, 9, 8.5], 250, [dash(250, 'side'), shield([50, 70, 90, 110, 130], { bhp: 0.15 }, 2)], { cast: 0 }),
       R: S([120, 100, 80], 350, [dmg(P, [70, 130, 190], { bad: 0.65 }), cc(0.75), buff('armorPen', 0, 1)], { cast: 0.25 }),
     },
     combo: ['W', 'Q', 'E', 'R'],
-    hooks: { onHit: nth('ntofo', 2, (ctx) => [{ dt: P, raw: (0.01 + (0.01 * ctx.u.stats.bonusHp) / 100) * ctx.tgt.maxHp, label: 'Dauntless Instinct' }]) },
+    hooks: { onHit: nth('ntofo', 2, (ctx) => [{ dt: P, raw: 20 + byLevel(0.01, 0.02, lvl(ctx)) * ctx.tgt.maxHp, label: 'Dauntless Instinct' }]) },
   },
   Kayle: {
     notes: `${SIMPLE} Gets ranged at 6, waves at 11. E on-hit % missing HP.`,
@@ -359,13 +359,13 @@ export const FIGHTERS = {
   Mordekaiser: {
     notes: `${SIMPLE} Passive aura burns after 3 hits. R isolates (always 1v1 here).`,
     spells: {
-      Q: S([9, 7.75, 6.5, 5.25, 4], 625, [dmg(M, [75, 95, 115, 135, 155], { ap: 0.6 }, { extra: (ctx) => byLevel(5, 107, lvl(ctx)), missingMult: 0 })], { cast: 0.5, aoe: true }),
+      Q: S([9, 7.75, 6.5, 5.25, 4], 625, [dmg(M, [60, 75, 90, 105, 120], { ap: 0.4, bad: 1.2 }, { extra: (ctx) => byLevel(0, 63, lvl(ctx)), missingMult: 0 })], { cast: 0.5, aoe: true }),
       W: S([14, 13, 12, 11, 10], 0, [shield(0, { hp: 0.15 }, 4)], { cast: 0, when: 'lowhp' }),
       E: S([18, 16, 14, 12, 10], 900, [dmg(M, [70, 85, 100, 115, 130], { ap: 0.6 }), dash(300, 'pull')], { cast: 0.75, aoe: true }),
       R: S([140, 120, 100], 650, [buff('ad', 25, 7)], { cast: 0.5 }),
     },
     combo: ['R', 'E', 'Q', 'W'],
-    hooks: { onHit: (ctx) => { ctx.addMark('dark', 1, 4); return ctx.mark('dark') >= 3 ? [{ dt: M, raw: (byLevel(5, 30, lvl(ctx)) + 0.3 * ctx.ap + 0.01 * ctx.tgt.maxHp) / Math.max(0.5, ctx.as), label: 'Darkness Rise' }] : [] } },
+    hooks: { onHit: (ctx) => { ctx.addMark('dark', 1, 4); return ctx.mark('dark') >= 3 ? [{ dt: M, raw: (byLevel(10, 35.5, lvl(ctx)) + 0.3 * ctx.ap + byLevel(0.01, 0.061, lvl(ctx)) * ctx.tgt.maxHp) / Math.max(0.5, ctx.as), label: 'Darkness Rise' }] : [] } },
   },
   Naafiri: {
     notes: `${SIMPLE} Packmates attack with her (approximated as bonus on-hit).`,
@@ -668,7 +668,7 @@ export const FIGHTERS = {
   Yone: {
     notes: `${SIMPLE} Every 2nd attack: half magic. E soul burst = % of damage during it.`,
     spells: {
-      Q: S(4, 450, [dmg(P, [20, 40, 60, 80, 100], { ad: 1.05 }, { crit: true, onHit: true })], { cast: 0.3, aoe: true }),
+      Q: S(4, 450, [dmg(P, [25, 50, 75, 100, 125], { ad: 1.1 }, { crit: true, onHit: true })], { cast: 0.3, aoe: true }),
       W: S([14, 13, 12, 11, 10], 600, [dmg(P, [5, 10, 15, 20, 25], { thp: [0.055, 0.06, 0.065, 0.07, 0.075] }, { hits: 2 }), shield([35, 45, 55, 65, 75], { bad: 0.65 }, 1.5)], { cast: 0.5, aoe: true }),
       E: S([22, 19, 16, 13, 10], 300, [dash(300, 'to')], { cast: 0 }),
       R: S([120, 100, 80], 1000, [dash(1000, 'to'), dmg(P, [200, 400, 600], { ad: 0.8 }), cc(0.75)], { cast: 0.75, aoe: true }),

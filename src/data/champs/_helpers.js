@@ -29,7 +29,7 @@ export const T = 'true'
 // dmg(type, base, ratios, extras)
 // ratios: ad (total AD), bad (bonus AD), ap, thp (% target max HP),
 //         tmiss (% target missing HP), tcur (% target current HP),
-//         hp (% own max HP), bhp (% own bonus HP), barmor (bonus armor)
+//         hp (% own max HP), bhp (% own bonus HP), barmor (bonus armor), bmr (bonus MR)
 export const dmg = (dt, base, r = {}, x = {}) => ({ t: 'dmg', dt, base, ...r, ...x })
 export const dot = (dt, base, r = {}, dur = 3, x = {}) => ({ t: 'dot', dt, base, ...r, dur, ...x })
 export const buff = (stat, val, dur, x = {}) => ({ t: 'buff', stat, val, dur, ...x })
